@@ -1,0 +1,28 @@
+# Python virtual environments
+env/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# VS Code settings
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Model checkpoints and outputs
+*.pth
+*.png
+metrics.csv
+
+# Other temporary files
+*.tmp
+*.bak

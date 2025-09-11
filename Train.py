@@ -11,17 +11,13 @@ from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
 import gc
 import torch.nn.functional as F
-import torch.amp as amp
-import torch.backends.cudnn as cudnn
 import os
 import numpy as np
 import time
 import csv
 from datetime import datetime
 
-cudnn.benchmark = True
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-scaler = amp.GradScaler()
+device = torch.device("cpu") # force CPU
 
 # ======== CONFIG DICT: ALL PARAMETERS FOR EXPERIMENT ========
 config = {
@@ -33,13 +29,13 @@ config = {
     },
     "hardware": {
         "device": str(device),
-        "cuda_benchmark": True,
-        "gpu": torch.cuda.get_device_name(0) if torch.cuda.is_available() else "None",
-        "cuda_version": torch.version.cuda if torch.cuda.is_available() else "None",
-        "gpu_mem_gb": torch.cuda.get_device_properties(0).total_memory / 1e9 if torch.cuda.is_available() else 0,
+        "cuda_benchmark": False,
+        "gpu": "None",
+        "cuda_version": "None",
+        "gpu_mem_gb": 0,
         "num_workers": 2,
-        "pin_memory": True,
-        "persistent_workers": True,
+        "pin_memory": False,
+        "persistent_workers": False,
         "prefetch_factor": 2
     },
     "data": {
@@ -59,16 +55,16 @@ config = {
         "const_threshold": 0.00005
     },
     "training": {
-        "epochs": 1000,
+        "epochs": 50,
         "initial_lr": 2e-5,
         "optimizer": "Adam",
         "scheduler": "ReduceLROnPlateau",
         "scheduler_factor": 0.5,
         "scheduler_patience": 1,
-        "mixed_precision": True,
+        "mixed_precision": False,
         "autoregressive_schedule": {
-            100:60,
-            200:70
+            10:60,
+            20:70
         },
         "warmup_steps": 20,
         "ar_steps_init": 50,
@@ -112,7 +108,7 @@ class MetricsMonitor:
     def log_batch(self, epoch, batch, train_loss, pinns_loss, train_acc, lr):
         elapsed = time.time() - self.start_time
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        gpu_mem = torch.cuda.memory_allocated() / 1e9 if torch.cuda.is_available() else 0
+        gpu_mem = 0 # always 0 on CPU
         self.writer.writerow([
             timestamp, epoch, batch, train_loss, pinns_loss, train_acc, 
             "", "", "", lr, elapsed, gpu_mem
@@ -121,7 +117,7 @@ class MetricsMonitor:
     def log_epoch(self, epoch, train_loss, pinns_loss, train_acc, test_loss, test_pinns_loss, test_acc, lr):
         elapsed = time.time() - self.start_time
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        gpu_mem = torch.cuda.memory_allocated() / 1e9 if torch.cuda.is_available() else 0
+        gpu_mem = 0
         self.writer.writerow([
             timestamp, epoch, "end", train_loss, pinns_loss, train_acc, 
             test_loss, test_pinns_loss, test_acc, lr, elapsed, gpu_mem
@@ -186,45 +182,57 @@ class LstmRegressor(nn.Module):
         self.lstm_cell = nn.LSTMCell(sim_hidden_dim, sim_hidden_dim)
         self.fc = nn.Linear(sim_hidden_dim, output_dim, bias=False)
 
-        
     def forward(self, x, autoregressive_steps=0):
         batch_size, seq_len, _ = x.size()
         device = x.device
 
-        # Preprocess all inputs at once for efficiency
         x_processed = self.act1(self.fc1(x))
-        
+
         # Initialize states
         h = torch.zeros(batch_size, self.sim_hidden_dim, device=device)
         c = torch.zeros(batch_size, self.sim_hidden_dim, device=device)
-        outputs = torch.zeros(batch_size, seq_len, self.fc.out_features, device=device)
-        
-        # HI related initialization
-        
-        # For supporting autoregressive mode similar to the original model
+
+        # Avoid in-place assignment: build a list and concat at the end
+        out_list = []
         transition_point = max(0, seq_len - autoregressive_steps)
-        
+
         for t in range(seq_len):
-            # Get current input
             if t == 0 or t < transition_point:
-                # Teacher forcing
                 x_t = x_processed[:, t, :]
             else:
-                # Autoregressive - use previous output
-                prev_output = outputs[:, t-1, :]
+                prev_output = out_list[-1].squeeze(1)
                 x_t = self.act1(self.fc1(prev_output))
-            
-            # LSTM forward
             h, c = self.lstm_cell(x_t, (h, c))
-            
-            # Generate next state
             next_state = self.fc(h)
-            outputs[:, t, :] = next_state
-            
-        
+            out_list.append(next_state.unsqueeze(1))
+        outputs = torch.cat(out_list, dim=1)
         return outputs
 
-def optimized_pinns_lossfn(O_norm, l, config):
+def optimized_pinns_lossfn(O_normm, l, config):
+    def unflip_sensors(data, flipped = [4, 8, 13, 14]):
+        """
+        Given a list of torch.Tensor objects (data: [T x S] per unit) and a list of sensor indices (flipped),
+        revert the flipping operation for those sensors (i.e., 1 - x).
+
+        Args:
+            data (list): List of torch.Tensor objects, each shape [T, S].
+            flipped (list): List of sensor indices that were previously flipped.
+
+        Returns:
+            unflipped_data (list): List of torch.Tensor objects with flipped sensors reverted.
+        """
+        unflipped_data = []
+        for arr in data:
+            # Defensive: skip empty tensors
+            if arr.numel() == 0 or len(flipped) == 0:
+                unflipped_data.append(arr)
+                continue
+            arr = arr.clone()  # avoid in-place ops on input
+            arr[:, flipped] = 1.0 - arr[:, flipped]
+            unflipped_data.append(arr)
+        return unflipped_data
+    
+    O_norm = unflip_sensors(O_normm.unsqueeze(0))[0]
     takes = config["training"]["takes"]
     warmup = config["training"]["warmup_steps"]
     lossfn = nn.L1Loss()
@@ -232,6 +240,7 @@ def optimized_pinns_lossfn(O_norm, l, config):
     Maxes = [518.67, 644.53, 1616.91, 1441.49, 14.62, 21.61, 556.06, 2388.56, 9244.59, 1.3, 48.53, 523.38, 2388.56, 8293.72, 8.5848, 0.03, 400, 2388, 100.0, 39.43, 23.6184]
     epsilon = 1e-6
     bs, seq_len, num_features = O_norm.size()
+    O_norm
     O = torch.zeros((bs,seq_len, 21), device=O_norm.device, dtype=O_norm.dtype)
     O[:,:,1] = O_norm[:,:,0].clone()
     O[:,:,2] = O_norm[:,:,1].clone()
@@ -253,7 +262,7 @@ def optimized_pinns_lossfn(O_norm, l, config):
     
     for i in range(O.size(-1)):
         if i in takes:
-            unnorm = O_norm[:,:,j] * (Maxes[i] - Mins[i]) + Mins[i]
+            unnorm = O_norm[:,:,j] * (Maxes[i] - Mins[i] + 1e-10) + Mins[i]
             j += 1
         else:
             unnorm = torch.zeros((bs,seq_len),device=O_norm.device, dtype=O_norm.dtype) + Mins[i]
@@ -270,7 +279,6 @@ def optimized_pinns_lossfn(O_norm, l, config):
         losses.append(loss)
     mass_conservation = sum(losses) / len(losses)
     return torch.log(mass_conservation)
-
 def load_json(path):
     with open(path, 'r') as f:
         data = json.load(f)
@@ -284,16 +292,13 @@ def apply_mask(y_hat, lengths):
     return y_hat * mask
 
 def main(config):
+    torch.autograd.set_detect_anomaly(True)
     run_id = config["run"]["run_id"]
     run_dir = os.path.join(config["run"]["root_dir"], run_id)
     os.makedirs(run_dir, exist_ok=True)
     metrics_file = os.path.join(run_dir, config["run"]["metrics_filename"])
     monitor = MetricsMonitor(metrics_file)
     print(f"Training on: {config['hardware']['device']}")
-    if torch.cuda.is_available():
-        print(f"GPU: {config['hardware']['gpu']}")
-        print(f"CUDA Version: {config['hardware']['cuda_version']}")
-        print(f"Available GPU memory: {config['hardware']['gpu_mem_gb']:.2f} GB")
     cache_path = config["data"]["cache_path"]
     if os.path.exists(cache_path):
         print("Loading cached data...")
@@ -338,7 +343,7 @@ def main(config):
         pin_memory=config["hardware"]["pin_memory"],
         persistent_workers=config["hardware"]["persistent_workers"]
     )
-    
+
     # Initialize LSTM model
     model = LstmRegressor(
         input_dim=config["model"]["input_dim"],
@@ -346,7 +351,7 @@ def main(config):
         sim_hidden_dim=config["model"]["sim_hidden_dim"],
         output_dim=config["model"]["output_dim"]
     ).to(config["hardware"]["device"])
-    
+
     optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["initial_lr"])
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=config["training"]["scheduler_factor"], patience=config["training"]["scheduler_patience"])
     mse_loss = nn.MSELoss()
@@ -372,27 +377,19 @@ def main(config):
                 if epoch == 400:
                     optimizer = torch.optim.Adam(model.parameters(), lr=config["training"]["ar_reset_lr"])
             for i, batch in enumerate(train_loader):
-                x, l, y = [b.to(config["hardware"]["device"], non_blocking=True) for b in batch]
-                with torch.amp.autocast('cuda'):
-                    # Get both outputs and health indicators
-                    y_hat = model(x, AUTOREGRESSIVE_STEPS)
-                    y_hat = apply_mask(y_hat, l)
-                    pinns_loss = optimized_pinns_lossfn(y_hat, l, config)
-                    y_hat_trimmed = y_hat[:, config["training"]["warmup_steps"]:, :]
-                    y_trimmed = y[:, config["training"]["warmup_steps"]:, :]
-                    loss_sim = mse_loss(y_hat_trimmed, y_trimmed)
-                    # Add HI loss (mean squared error between health indicators)
-                    
-                    
-                    if epoch > 200:
-                        loss = loss_sim*100 + pinns_loss
-                    else:
-                        loss = loss_sim
-                
+                x, l, y = [b.to(config["hardware"]["device"]) for b in batch]
+                y_hat = model(x, AUTOREGRESSIVE_STEPS)
+                y_hat = apply_mask(y_hat, l)
+                pinns_loss = optimized_pinns_lossfn(y_hat, l, config)
+                y_hat_trimmed = y_hat[:, config["training"]["warmup_steps"]:, :]
+                y_trimmed = y[:, config["training"]["warmup_steps"]:, :]
+                loss_sim = mse_loss(y_hat_trimmed, y_trimmed)
+                loss = loss_sim*100
+
                 optimizer.zero_grad(set_to_none=True)
-                scaler.scale(loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
+                loss.backward()
+                optimizer.step()
+
                 acc = (1 - torch.abs(y_trimmed - y_hat_trimmed).mean() / y_trimmed.mean()).item()
                 epoch_train_loss += loss_sim.item()
                 epoch_pinns_loss += pinns_loss.item()
@@ -418,12 +415,11 @@ def main(config):
             num_test_batches = 0
             with torch.no_grad():
                 for batch in test_loader:
-                    x, l, y = [b.to(config["hardware"]["device"], non_blocking=True) for b in batch]
-                    with torch.amp.autocast('cuda'):
-                        y_hat= model(x, AUTOREGRESSIVE_STEPS)
-                        y_hat = apply_mask(y_hat, l)
-                        pinns_loss = optimized_pinns_lossfn(y_hat, l, config)
-                        loss_sim = mse_loss(y_hat, y)
+                    x, l, y = [b.to(config["hardware"]["device"]) for b in batch]
+                    y_hat= model(x, AUTOREGRESSIVE_STEPS)
+                    y_hat = apply_mask(y_hat, l)
+                    pinns_loss = optimized_pinns_lossfn(y_hat, l, config)
+                    loss_sim = mse_loss(y_hat, y)
                     acc = (1 - torch.abs(y - y_hat).mean() / y.mean()).item()
                     epoch_test_loss += loss_sim.item()
                     epoch_test_pinns_loss += pinns_loss.item()
