@@ -1,0 +1,127 @@
+hypothesis,model,equation,notes,sensor,r2,mae,y_test_std,n_train,n_test,n_features
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s1,1.0,0.0,0.0,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s2,-0.0011550281115344507,0.40932667398206324,0.5076013411825356,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s3,-0.0006697196198728328,4.997355604011613,6.311951418470039,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s4,-0.00017884123810740782,7.4071456816293075,9.138213151456167,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s5,-1.25,5.329070518200751e-15,3.552713678800501e-15,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s6,-0.0001247718137962206,0.0004068861196732909,0.0014863869847093817,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s7,-0.00022438138915603645,0.7391263859048003,0.913951146013676,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s8,-0.0006558133562433177,0.0582953169562111,0.07232391031537028,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s9,-0.0015773348064875847,13.620383357599096,19.54794375085285,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s10,0.0,2.220446049250313e-16,2.220446049250313e-16,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s11,-0.0006924058747004302,0.21887447448694244,0.27244229555210625,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s12,-0.00029599536111613034,0.6033221178562206,0.7477127943171277,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s13,0.00031670115419757394,0.05865598065351557,0.07275639300131045,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s14,-0.0020764596383213707,11.940441464014802,16.82348269018121,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s15,0.00013368467166874343,0.03023750108009344,0.03748858631439066,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s16,0.4375,1.0408340855860843e-17,1.3877787807814457e-17,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s17,-5.71659473489472e-05,1.239330879370293,1.5584897510723095,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s18,1.0,0.0,0.0,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s19,1.0,0.0,0.0,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s20,-0.002128982740863483,0.14783902375602648,0.18410618374888527,16561,4070,3
+H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,s21,-0.0012279700380040115,0.08976178759418939,0.11157063360363186,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s1,1.0,0.0,0.0,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s2,0.4633994664374186,0.2995049600866842,0.5076013411825356,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s3,0.4529883943950056,3.758824926233873,6.311951418470039,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s4,0.5924013290286054,4.801002288515245,9.138213151456167,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s5,-1.25,5.329070518200751e-15,3.552713678800501e-15,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s6,0.018780891307922154,0.00040151663874607517,0.0014863869847093817,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s7,0.5603979124811845,0.49826381869561387,0.913951146013676,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s8,0.39045494007381,0.04721603863374131,0.07232391031537028,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s9,0.2864800316067313,11.843546876889114,19.54794375085285,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s10,0.0,2.220446049250313e-16,2.220446049250313e-16,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s11,0.6220890593021373,0.13763608870562663,0.27244229555210625,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s12,0.586037240307139,0.39835808618885576,0.7477127943171277,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s13,0.3898437102378377,0.047975169242193166,0.07275639300131045,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s14,0.1815214399223759,11.17663372913016,16.82348269018121,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s15,0.5413954137918566,0.020403762305789965,0.03748858631439066,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s16,0.4375,1.0408340855860843e-17,1.3877787807814457e-17,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s17,0.4861540900493443,0.9043444152627308,1.5584897510723095,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s18,1.0,0.0,0.0,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s19,1.0,0.0,0.0,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s20,0.5010362472018433,0.10504477841719664,0.18410618374888527,16561,4070,3
+H1_degr_poly_ridge,ridge_scaled,"y_s(t) = b0 + b1*d + b2*d^2 + b3*d^3, d=t/T_fail",Monotone polynomial degradation,s21,0.519750086540137,0.062485982673834525,0.11157063360363186,16561,4070,3
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s1,0.0,1.708984370907274e-05,0.0,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s2,0.44164387978181685,0.3049293905722133,0.5076013411825356,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s3,0.42454214164733195,3.8595610807451637,6.311951418470039,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s4,0.5753050210331656,4.892756058526566,9.138213151456167,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s5,-1037629339972769.0,1.1444091718715299e-07,3.552713678800501e-15,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s6,-0.025360709809027604,0.000426208196166204,0.0014863869847093817,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s7,0.5407821264145454,0.5055761682758755,0.913951146013676,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s8,0.3615764449725889,0.04800732301902449,0.07232391031537028,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s9,0.16387524352915261,12.034881689573087,19.54794375085285,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s10,-4.6116860270173224e+16,4.768371586472142e-08,2.220446049250313e-16,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s11,0.6047328336873063,0.1403682504789835,0.27244229555210625,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s12,0.5649446821846926,0.4079640291481109,0.7477127943171277,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s13,0.3567513785099574,0.049052064937789706,0.07275639300131045,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s14,0.04836051554445453,11.335085126497232,16.82348269018121,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s15,0.5134295527072099,0.021036009268420936,0.03748858631439066,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s16,-2334666039097922.5,6.705522526129215e-10,1.3877787807814457e-17,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s17,0.4577227830886841,0.9243244528770447,1.5584897510723095,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s18,1.0,0.0,0.0,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s19,1.0,0.0,0.0,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s20,0.47696618338402175,0.10762720056482265,0.18410618374888527,16561,4070,8
+H2_settings_degr_xgb,xgb,"y_s(t) = F_xgb(u(t), d, d^2, d^3, 1/(rul+eps), exp(-3d))",Nonlinear settings + degradation,s21,0.4991882795005741,0.06378111505006981,0.11157063360363186,16561,4070,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s1,0.0,1.708984370907274e-05,0.0,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s2,0.9976808837022608,0.012319935081614901,0.507633183408588,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s3,0.9974408728939915,0.16986742982320022,6.3221323313274365,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s4,0.9986738732666792,0.19572075522449073,9.140505410681977,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s5,-1037629339972769.1,1.1444091718715299e-07,3.552713678800501e-15,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s6,0.9984522477629589,3.3889543329236156e-05,0.0014695798028350792,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s7,0.9984705919081108,0.02013520059514532,0.9142768591757527,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s8,0.9978406759851431,0.002650393048217381,0.07241035712757181,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s9,0.9993876240773557,0.2651985984026026,19.607633746930297,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s10,-4.611686027017323e+16,4.768371586472142e-08,2.220446049250313e-16,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s11,0.9994725868483003,0.003998732725384766,0.2726074546078412,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s12,0.9991952481152108,0.013740185304552299,0.7481534835118542,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s13,0.9979734154775749,0.002591838069928944,0.07272638097205585,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s14,0.9994861263068772,0.21949589019850893,16.872726205405325,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s15,0.9981800942714399,0.0009152893407173174,0.037467616212747676,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s16,-2334666039097923.5,6.705522526129215e-10,1.3877787807814457e-17,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s17,0.9996218681335449,0.010186578147113323,1.5579939338361337,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s18,1.0,0.0,0.0,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s19,1.0,0.0,0.0,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s20,0.9990651274836506,0.003437659743997643,0.1838563072183536,16401,4030,8
+H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,s21,0.9978182863324747,0.002878535973333556,0.11168051822626535,16401,4030,8
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s1,0.0,1.708984370907274e-05,0.0,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s2,0.9969732245602757,0.014545048488872891,0.507633183408588,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s3,0.9973663835613557,0.18273012222782373,6.3221323313274365,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s4,0.9982534054792906,0.24146402712081252,9.140505410681977,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s5,-1037629339972769.1,1.1444091718715299e-07,3.552713678800501e-15,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s6,0.9977680472694852,3.7298046329196394e-05,0.0014695798028350792,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s7,0.9979736793652296,0.025134416073782063,0.9142768591757527,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s8,0.9977347547204003,0.0027424201302602472,0.07241035712757181,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s9,0.999305495075797,0.2915185231854812,19.607633746930297,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s10,-4.611686027017323e+16,4.768371586472142e-08,2.220446049250313e-16,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s11,0.9992962584576834,0.0046865491843401386,0.2726074546078412,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s12,0.9990166733662038,0.01605584822813292,0.7481534835118542,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s13,0.9978966542908274,0.002656414779761956,0.07272638097205585,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s14,0.9994195664472908,0.22171514907723278,16.872726205405325,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s15,0.997779778373433,0.0011091417718702744,0.037467616212747676,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s16,-2334666039097923.5,6.705522526129215e-10,1.3877787807814457e-17,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s17,0.9995851516723633,0.013515978120267391,1.5579939338361337,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s18,1.0,0.0,0.0,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s19,1.0,0.0,0.0,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s20,0.9982314796856054,0.004931137880083915,0.1838563072183536,16401,4030,28
+H4_crosssensor_autoreg_xgb,xgb,"y_s(t) = F_xgb(u(t), d, {y_j(t-1)}_{j=1..21}, y_s(t-2), Delta y_s(t-1))",Cross-sensor coupled autoregression,s21,0.9973029406093676,0.003440752393850294,0.11168051822626535,16401,4030,28
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s1,0.0,1.708984370907274e-05,0.0,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s2,0.4366819688062237,0.30657592473510464,0.5076013411825356,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s3,0.424377862281786,3.8524987163121933,6.311951418470039,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s4,0.5710936904302357,4.913590669149262,9.138213151456167,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s5,-1037629339972769.0,1.1444091718715299e-07,3.552713678800501e-15,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s6,-0.035234182311929096,0.0004281992057027037,0.0014863869847093817,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s7,0.5367896435450863,0.5071216036259982,0.913951146013676,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s8,0.35727659433041237,0.048205985104404644,0.07232391031537028,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s9,0.14527497160392344,12.109744414158468,19.54794375085285,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s10,-4.6116860270173224e+16,4.768371586472142e-08,2.220446049250313e-16,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s11,0.6035730929081967,0.1406100470615546,0.27244229555210625,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s12,0.5598555491966875,0.41069790147036245,0.7477127943171277,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s13,0.35287177278663795,0.04918547009365496,0.07275639300131045,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s14,0.024844334462038375,11.407969829737405,16.82348269018121,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s15,0.51598943706417,0.021001520706289252,0.03748858631439066,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s16,-2334666039097922.5,6.705522526129215e-10,1.3877787807814457e-17,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s17,0.45530158281326294,0.9271125793457031,1.5584897510723095,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s18,1.0,0.0,0.0,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s19,1.0,0.0,0.0,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s20,0.47196653597513616,0.10767818793969305,0.18410618374888527,16561,4070,13
+H5_physics_basis_xgb,xgb,"y_s(t) = F_xgb(u, d, d^2, d^3, sqrt(d), log(1+1/rul), exp(-3d), u*d)",Physics-inspired nonlinear basis,s21,0.4987393990227117,0.06395039930113995,0.11157063360363186,16561,4070,13

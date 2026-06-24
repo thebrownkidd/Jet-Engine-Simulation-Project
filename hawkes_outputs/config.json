@@ -1,0 +1,30 @@
+{
+  "dataset_id": 1,
+  "split": {
+    "train_series": 80,
+    "test_series": 20,
+    "random_seed": 42
+  },
+  "eventing": {
+    "quantile": 0.95,
+    "eps": 1e-12
+  },
+  "plot": {
+    "nrows": 7,
+    "ncols": 3,
+    "figsize": [
+      36,
+      28
+    ],
+    "dpi": 300,
+    "rolling_window": 10
+  },
+  "output": {
+    "root_dir": "hawkes_outputs",
+    "per_sensor_parquet_dir": "hawkes_outputs/per_sensor_data",
+    "per_sensor_plot_dir": "plotting/hawkes/per_sensor_pred_vs_truth",
+    "summary_plot_path": "plotting/hawkes/pred_vs_truth_multipanel.png",
+    "metrics_csv": "hawkes_outputs/hawkes_metrics.csv",
+    "config_json": "hawkes_outputs/config.json"
+  }
+}

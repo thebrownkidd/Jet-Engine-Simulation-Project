@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-06-24T01:37:22",
+  "n_equations": 11,
+  "identity_eqs": {
+    "C1_corr_fan_speed": 0.6829351513452863,
+    "C2_corr_core_speed": 0.9106431618207751
+  },
+  "degradation_discovery": {
+    "pc1_var": 0.5731642742963965,
+    "corr_with_life": 0.7731273542524426,
+    "mean_per_engine_monotonicity": 0.8727311386478244,
+    "loadings": {
+      "C3_hpc_euler_work": 0.4077,
+      "C4_hpc_polytropic": 0.3292,
+      "C5_lpt_outlet_temp": 0.3147,
+      "C6_fuel_coupling": -0.2445,
+      "C9_bleed_enthalpy": 0.4072,
+      "C10_hpt_coolant": -0.4478,
+      "C11_lpt_coolant": -0.4474
+    }
+  },
+  "refit_with_theta": {
+    "C3_hpc_euler_work": 0.4303569599994108,
+    "C4_hpc_polytropic": 0.5907554995982224,
+    "C5_lpt_outlet_temp": 0.7812683915314154,
+    "C6_fuel_coupling": 0.7703104836595037,
+    "C9_bleed_enthalpy": 0.5999406816488082,
+    "C10_hpt_coolant": 0.669649090795571,
+    "C11_lpt_coolant": 0.6862100684386221
+  },
+  "plot": "plotting/physics_conservation\\discovered_degradation.png"
+}

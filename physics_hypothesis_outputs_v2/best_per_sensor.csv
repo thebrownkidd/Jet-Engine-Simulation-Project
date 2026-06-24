@@ -1,0 +1,22 @@
+sensor,hypothesis,model,equation,notes,r2,mae,y_test_std,n_train,n_test,n_features
+s1,H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,1.0,0.0,0.0,16561,4070,3
+s10,H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,0.0,2.220446049250313e-16,2.220446049250313e-16,16561,4070,3
+s11,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9994725868483003,0.003998732725384766,0.2726074546078412,16401,4030,8
+s12,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9991952481152108,0.013740185304552299,0.7481534835118542,16401,4030,8
+s13,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9979734154775749,0.002591838069928944,0.07272638097205585,16401,4030,8
+s14,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9994861263068772,0.21949589019850893,16.872726205405325,16401,4030,8
+s15,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9981800942714399,0.0009152893407173174,0.037467616212747676,16401,4030,8
+s16,H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,0.4375,1.0408340855860843e-17,1.3877787807814457e-17,16561,4070,3
+s17,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9996218681335449,0.010186578147113323,1.5579939338361337,16401,4030,8
+s18,H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,1.0,0.0,0.0,16561,4070,3
+s19,H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,1.0,0.0,0.0,16561,4070,3
+s2,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9976808837022608,0.012319935081614901,0.507633183408588,16401,4030,8
+s20,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9990651274836506,0.003437659743997643,0.1838563072183536,16401,4030,8
+s21,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9978182863324747,0.002878535973333556,0.11168051822626535,16401,4030,8
+s3,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9974408728939915,0.16986742982320022,6.3221323313274365,16401,4030,8
+s4,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9986738732666792,0.19572075522449073,9.140505410681977,16401,4030,8
+s5,H0_settings_linear,linear,y_s(t) = a0 + a1*u1(t) + a2*u2(t) + a3*u3(t),Settings-only baseline,-1.25,5.329070518200751e-15,3.552713678800501e-15,16561,4070,3
+s6,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9984522477629589,3.3889543329236156e-05,0.0014695798028350792,16401,4030,8
+s7,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9984705919081108,0.02013520059514532,0.9142768591757527,16401,4030,8
+s8,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9978406759851431,0.002650393048217381,0.07241035712757181,16401,4030,8
+s9,H3_autoreg_targetlag_xgb,xgb,"y_s(t) = F_xgb(u(t), d, y_s(t-1), y_s(t-2), Delta y_s(t-1))",Target autoregression + health state,0.9993876240773557,0.2651985984026026,19.607633746930297,16401,4030,8

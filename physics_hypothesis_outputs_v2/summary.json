@@ -1,0 +1,159 @@
+{
+  "dataset": "FD001",
+  "target_r2": 0.9,
+  "stationary_std_threshold": 0.0001,
+  "stats": {
+    "num_nonstationary": 15,
+    "num_target_met": 15,
+    "num_target_not_met": 0
+  },
+  "best_per_sensor": [
+    {
+      "sensor": "s1",
+      "hypothesis": "H0_settings_linear",
+      "r2": 1.0,
+      "mae": 0.0,
+      "y_test_std": 0.0
+    },
+    {
+      "sensor": "s10",
+      "hypothesis": "H0_settings_linear",
+      "r2": 0.0,
+      "mae": 2.220446049250313e-16,
+      "y_test_std": 2.220446049250313e-16
+    },
+    {
+      "sensor": "s11",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9994725868483003,
+      "mae": 0.003998732725384766,
+      "y_test_std": 0.2726074546078412
+    },
+    {
+      "sensor": "s12",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9991952481152108,
+      "mae": 0.013740185304552299,
+      "y_test_std": 0.7481534835118542
+    },
+    {
+      "sensor": "s13",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9979734154775749,
+      "mae": 0.002591838069928944,
+      "y_test_std": 0.07272638097205585
+    },
+    {
+      "sensor": "s14",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9994861263068772,
+      "mae": 0.21949589019850893,
+      "y_test_std": 16.872726205405325
+    },
+    {
+      "sensor": "s15",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9981800942714399,
+      "mae": 0.0009152893407173174,
+      "y_test_std": 0.037467616212747676
+    },
+    {
+      "sensor": "s16",
+      "hypothesis": "H0_settings_linear",
+      "r2": 0.4375,
+      "mae": 1.0408340855860843e-17,
+      "y_test_std": 1.3877787807814457e-17
+    },
+    {
+      "sensor": "s17",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9996218681335449,
+      "mae": 0.010186578147113323,
+      "y_test_std": 1.5579939338361337
+    },
+    {
+      "sensor": "s18",
+      "hypothesis": "H0_settings_linear",
+      "r2": 1.0,
+      "mae": 0.0,
+      "y_test_std": 0.0
+    },
+    {
+      "sensor": "s19",
+      "hypothesis": "H0_settings_linear",
+      "r2": 1.0,
+      "mae": 0.0,
+      "y_test_std": 0.0
+    },
+    {
+      "sensor": "s2",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9976808837022608,
+      "mae": 0.012319935081614901,
+      "y_test_std": 0.507633183408588
+    },
+    {
+      "sensor": "s20",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9990651274836506,
+      "mae": 0.003437659743997643,
+      "y_test_std": 0.1838563072183536
+    },
+    {
+      "sensor": "s21",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9978182863324747,
+      "mae": 0.002878535973333556,
+      "y_test_std": 0.11168051822626535
+    },
+    {
+      "sensor": "s3",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9974408728939915,
+      "mae": 0.16986742982320022,
+      "y_test_std": 6.3221323313274365
+    },
+    {
+      "sensor": "s4",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9986738732666792,
+      "mae": 0.19572075522449073,
+      "y_test_std": 9.140505410681977
+    },
+    {
+      "sensor": "s5",
+      "hypothesis": "H0_settings_linear",
+      "r2": -1.25,
+      "mae": 5.329070518200751e-15,
+      "y_test_std": 3.552713678800501e-15
+    },
+    {
+      "sensor": "s6",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9984522477629589,
+      "mae": 3.3889543329236156e-05,
+      "y_test_std": 0.0014695798028350792
+    },
+    {
+      "sensor": "s7",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9984705919081108,
+      "mae": 0.02013520059514532,
+      "y_test_std": 0.9142768591757527
+    },
+    {
+      "sensor": "s8",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9978406759851431,
+      "mae": 0.002650393048217381,
+      "y_test_std": 0.07241035712757181
+    },
+    {
+      "sensor": "s9",
+      "hypothesis": "H3_autoreg_targetlag_xgb",
+      "r2": 0.9993876240773557,
+      "mae": 0.2651985984026026,
+      "y_test_std": 19.607633746930297
+    }
+  ]
+}

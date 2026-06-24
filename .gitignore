@@ -20,8 +20,8 @@ Thumbs.db
 
 # Model checkpoints and outputs
 *.pth
-*.png
-metrics.csv
+
+
 
 # Other temporary files
 *.tmp
@@ -29,7 +29,7 @@ metrics.csv
 
 runs_simulator
 Data
-*.csv
+
 runs_simulator/*
 fit_plots
 crazy_fit_plots
@@ -40,3 +40,5 @@ Test_power_distribution
 Data.zip
 *.pt
 data_cache.pt
+.venv
+.github
