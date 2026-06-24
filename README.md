@@ -1,533 +1,613 @@
-# A Physics-Constrained Health Manifold for Turbofan Remaining-Useful-Life Prediction: Discovery, Provably-Bounded Rollout, and Cross-Dataset Validation on C-MAPSS
+# A Bounded, Monotone Latent-Dynamics Algorithm for RUL Prediction
 
-> **One-line summary.** We learn a 2-dimensional, monotone, physics-constrained
-> *health manifold* from raw turbofan sensor streams, prove that rolling it out
-> forward in time is *bounded for all horizons* (whereas the natural
-> sensor-space linear model provably diverges), and show that the health state
-> predicts Remaining Useful Life (RUL) on **all four** C-MAPSS sub-datasets
-> (FD001–FD004), beating a mean-RUL baseline on every one.
+> One-line summary: we learn a 2D latent state from condition-normalized sensor streams, enforce bounded and monotone latent dynamics, prove stability and forecastability properties of the learned dynamics, show NASA C-MAPSS is a suitable dataset for this algorithm, and report cross-dataset results on FD001-FD004.
 
 ---
 
 ## Abstract
 
-Data-driven prognostics for jet engines typically train a black-box regressor
-to map a sliding window of sensors to RUL. Such models are accurate but offer
-no guarantee that the *internal dynamics they imply* are physically sensible —
-roll them forward and they can diverge. We take the opposite route: we first
-**discover** a low-dimensional degradation state, constrain it to be bounded
-and monotone (the two properties a wear coordinate must have), and only then
-read RUL off it. The pipeline has four stages — *discovery*, *rollout
-stability*, *health forecasting*, and *RUL prediction* — each tied to a formal
-theorem. The decisive structural result is a **boundedness dichotomy**: a
-sensor-space vector autoregression (VAR) has spectral radius
-$\rho(A) > 1$ on every dataset and free-runs to $25\text{–}760\times$ its
-initial norm, while the manifold rollout is provably bounded by the decoder's
-Lipschitz constant and stays flat. We generalize the originally FD001-only
-method to the multi-regime, multi-fault datasets FD002–FD004 using an
-**operating-condition normalization** (regime clustering + per-regime
-standardization) so that a common degradation residual is exposed regardless of
-flight condition. Across FD001–FD004 the health$\to$RUL map attains test
-$R^2 \in [0.744, 0.878]$ and RMSE below the mean baseline on all four datasets.
+This document presents an algorithmic contribution for Remaining Useful Life (RUL) prediction from multivariate run-to-failure data. The method learns a low-dimensional latent state from condition-normalized sensors, imposes mathematical structure (boundedness and monotonicity), then uses that latent state for rollout, forecasting, and RUL mapping.
+
+Important claim boundary: the latent variables are learned proxies for health, not physically measured health variables. We do not claim discovery of physically meaningful health coordinates. We claim discovery of useful hidden latent dynamics that are mathematically structured, explainable, and predictive for RUL.
 
 ---
 
-## 1. Introduction
+## 1. Algorithmic Contribution and Claim Boundaries
 
-### 1.1 Problem
+### 1.1 Contribution
 
-Given multivariate sensor histories from a fleet of turbofan engines run to
-failure, predict the **Remaining Useful Life (RUL)** of a partially-degraded
-engine: how many operating cycles remain before it crosses a failure threshold.
-This is the canonical NASA C-MAPSS benchmark.
+The contribution is an algorithm with three components:
 
-### 1.2 Why a physics-grounded latent state
+1. Operating-condition normalization that removes regime staircase effects.
+2. A bounded, monotone latent-state learner (2D autoencoder with structured penalties).
+3. A latent-dynamics stack for rollout, forecasting, and RUL prediction.
 
-A direct sensors-$\to$-RUL regressor cannot answer two questions a maintenance
-engineer actually cares about:
+### 1.2 Explicit non-claims
 
-1. **Is the implied degradation trajectory stable?** If you ask the model to
-   *simulate* the engine forward, does it stay in a physically plausible
-   envelope, or does it blow up?
-2. **Is the latent it uses monotone in wear?** Wear is a one-way process; a
-   health coordinate that wanders is not interpretable.
+We explicitly do not claim:
 
-We therefore impose the two non-negotiable properties of a wear coordinate —
-**boundedness** (via a logistic bottleneck) and **monotonicity** (via a
-penalty) — and make them *theorems*, not hopes. RUL then becomes a smooth
-read-out of an interpretable state.
+1. first-principles physical model identification,
+2. discovery of true physical degradation state variables,
+3. thermodynamic or component-level causal recovery.
 
-### 1.3 Contributions
+We do claim:
 
-1. **A physics-constrained 2-D health autoencoder** with monotonicity and
-   smoothness penalties whose latent is bounded by construction.
-2. **A boundedness dichotomy** (Theorems 1–2): the natural sensor-space VAR
-   provably diverges ($\rho(A)>1$), the manifold rollout provably cannot.
-   Verified empirically on all four datasets.
-3. **A polynomial forecast-error bound** (Theorem 3) for the smooth, monotone
-   health coordinate, explaining why constant-velocity extrapolation in
-   *health* space works where autoregression in *sensor* space explodes.
-4. **An operating-condition normalization** that generalizes the whole method
-   from the single-regime FD001 to the 6-regime / 2-fault datasets FD002–FD004
-   with no architecture change.
-5. **A cross-dataset evaluation** (Section 8) on FD001–FD004 with a single
-   reproducible driver.
-
-```mermaid
-flowchart LR
-    ID["<b>Discovery</b><br/>identifiable 2-D health<br/>(PCA + constrained AE)"]
-    ST["<b>Stable rollout</b><br/>bounded vs VAR rho>1"]
-    FC["<b>Forecastable</b><br/>error ~ (kappa/2) t^2"]
-    RUL["<b>RUL</b><br/>health -> RUL regressor"]
-    ID --> ST --> FC --> RUL
-```
+1. mathematically structured latent dynamics,
+2. provable stability properties of rollout,
+3. empirical utility for RUL prediction across FD001-FD004.
 
 ---
 
-## 2. Data: NASA C-MAPSS (FD001–FD004)
+## 2. Problem Setup, Conditions, and Notation
 
-Each sub-dataset is a fleet of engines with 21 sensors and 3 operating-condition
-settings, run from healthy to failure (training) or truncated before failure
-(test, with ground-truth RUL provided separately). The four sub-datasets form a
-$2\times2$ difficulty grid in **# operating regimes** $\times$ **# fault modes**:
+We observe engine trajectories with cycle index $t$, sensor vector $x_t \in \mathbb{R}^m$, operating settings, and run-to-failure labels in training.
 
-| Dataset | Operating regimes | Fault modes | Train units | Test units |
-|---|---|---|---|---|
-| **FD001** | 1 | 1 (HPC degradation) | 100 | 100 |
-| **FD002** | 6 | 1 (HPC degradation) | 260 | 259 |
-| **FD003** | 1 | 2 (HPC + Fan) | 100 | 100 |
-| **FD004** | 6 | 2 (HPC + Fan) | 249 | 248 |
+Conditions assumed by the algorithm:
 
-The diagonal stress test is the whole point: FD001 is the easy corner (one
-condition, one fault); FD004 is the hard corner (six conditions, two faults).
-A method that only works on FD001 has overfit to an unusually clean regime.
+1. Sensor streams contain an operating-condition component and a degradation component.
+2. After condition normalization, degradation is lower-dimensional than full sensor space.
+3. A bounded and smooth latent representation is sufficient for practical forecasting and RUL mapping.
 
-### 2.1 The multi-regime problem
-
-In FD002/FD004 the engine cycles through six discrete flight conditions. Raw
-sensors therefore jump in a *staircase* that has nothing to do with wear — it
-is pure operating point. Any degradation signal is buried under this staircase.
-Section 4.1 removes it.
-
----
-
-## 3. Notation
+Notation:
 
 | Symbol | Meaning |
 |---|---|
-| $x_t \in \mathbb{R}^{m}$ | sensor vector at cycle $t$ ($m$ = # dynamic sensors kept) |
-| $c_t \in \{1,\dots,R\}$ | operating-regime label at cycle $t$ ($R$ regimes) |
-| $z_t$ | condition-normalized sensor residual (Section 4.1) |
-| $\bar{x}_t$ | denoised (rolling-median) trend |
-| $h_t = E_\theta(x_t) \in (0,1)^k$ | health state, $k=2$ |
-| $\hat x_t = D_\phi(h_t)$ | decoder reconstruction |
-| $d_t \in [0,1]$ | life fraction (cycle / failure cycle) |
-| $\rho(A)$ | spectral radius of VAR matrix $A$ |
-| $\kappa$ | bound on $|\Delta^2 h_0|$ (health curvature) |
+| $x_t$ | raw sensor vector at cycle $t$ |
+| $c_t$ | regime label at cycle $t$ |
+| $z_t$ | condition-normalized sensor residual |
+| $\bar z_t$ | denoised residual |
+| $h_t=(h_{0,t}, h_{1,t})$ | learned 2D latent state |
+| $\rho(A)$ | spectral radius of sensor-space linear rollout |
+| $\kappa$ | latent curvature bound proxy |
 
 ---
 
-## 4. Methodology
+## 3. Core Algorithm (all theorem/proof math included here)
 
-### 4.0 Pipeline overview
+### 3.0 What The Algorithm Does
 
-```mermaid
-flowchart TD
-    A["Raw sensors x_t + settings"] --> B["<b>4.1 Condition normalization</b><br/>KMeans regimes -> per-regime<br/>mean removal + within-regime std"]
-    B --> C["<b>4.2 Sensor selection</b><br/>trend |corr(sensor, cycle)|"]
-    C --> D["<b>4.3 Denoise</b><br/>rolling median, window 15"]
-    D --> E["<b>4.4 k=2 health autoencoder</b><br/>sigmoid bottleneck +<br/>monotonicity + smoothness"]
-    E --> F["<b>4.5 Rollout</b><br/>velocity extrapolation in (0,1)^k"]
-    E --> G["<b>4.6 RUL</b><br/>HistGBR on (h0,h1,h0',h1')"]
-```
+At a high level, the algorithm transforms raw multivariate time series into a
+small learned latent state that is easier to forecast and safer to roll out:
 
-### 4.1 Operating-condition normalization (the key generalization)
+1. Remove operating-condition shifts so sensors are compared on a common basis.
+2. Keep channels that actually move with degradation.
+3. Learn a 2D latent proxy state constrained to be bounded and monotone.
+4. Forecast that latent state and map latent level/rate to RUL.
 
-For multi-regime data we expose a *common-scale degradation residual*:
+This design directly targets long-horizon stability and interpretability of
+latent dynamics, rather than maximizing unconstrained one-step sensor fit.
 
-1. **Regime clustering.** Fit `KMeans(n_clusters = R, n_init = 10,
-   random_state = 42)` on the three operating settings
-   $(\text{setting}_1, \text{setting}_2, \text{setting}_3)$. $R = 1$ for
-   FD001/FD003, $R = 6$ for FD002/FD004 (chosen from the known C-MAPSS regime
-   count; the six clusters are cleanly separated).
-2. **Per-regime mean removal.** For each sensor $j$ and regime $r$, subtract the
-   regime-specific healthy mean $\mu_{j,r}$. This *kills the staircase*: what
-   remains is deviation-from-nominal *within* the current flight condition.
-3. **Pooled within-regime standardization.** Divide by the pooled
-   within-regime standard deviation $s_j$, putting every sensor on a comparable
-   scale.
+### 3.1 Step A: Operating-condition normalization
+
+Estimate regime labels from operating settings (rounded-setting distinct-count heuristic capped at 6, then KMeans on settings), and normalize each sensor by regime:
 
 $$
-z_{t,j} \;=\; \frac{x_{t,j} - \mu_{j,\,c_t}}{s_j}.
+z_{t,j} = \frac{x_{t,j} - \mu_{j,c_t}}{s_j},
 $$
 
-The autoencoder operates entirely in this normalized frame, so a single
-architecture handles 1- and 6-regime datasets identically.
+where $\mu_{j,c_t}$ is per-regime mean and $s_j$ is pooled within-regime standard deviation.
 
-### 4.2 Trend-based sensor selection
+Purpose: isolate degradation residual from operating-point staircase effects.
 
-Rather than hard-coding sensor lists per dataset, we score each sensor by the
-mean over engines of $|\,\mathrm{corr}(\bar x_j, \text{cycle})\,|$ (Pearson, on
-the denoised channel). Sensors above $\text{TREND}_\text{dynamic}=0.20$ are
-*dynamic* (carry degradation); above $\text{TREND}_\text{informative}=0.50$ are
-*informative*. A safety net guarantees $\ge 3$ dynamic sensors. This selected
-**14 sensors for FD001 and 15 for FD002–FD004** automatically.
+### 3.2 Step B: Trend-based sensor selection and denoising
 
-### 4.3 Denoising
-
-Per-engine rolling **median**, window $w = 15$ (causal/trailing variant
-wherever temporal leakage must be excluded, e.g. forecasting and test-time
-features). Median is used over mean for robustness to sensor spikes.
-
-### 4.4 The $k=2$ physics-constrained health autoencoder
-
-A small MLP autoencoder with a **logistic bottleneck**:
+For each sensor $j$, compute trend score
 
 $$
-E_\theta:\; \mathbb{R}^m \xrightarrow{\,\text{Lin}(32)\,\tanh\,\text{Lin}(16)\,\tanh\,\text{Lin}(2)\,} \xrightarrow{\;\sigma\;} (0,1)^2,
+\tau_j = \mathbb{E}_{\text{engine}}\left[\left|\mathrm{corr}(\bar z_j, \text{cycle})\right|\right].
+$$
+
+Keep:
+
+1. dynamic sensors: $\tau_j \ge 0.20$,
+2. informative sensors: $\tau_j \ge 0.50$,
+
+with fallback if too few channels pass.
+
+Denoise selected channels with rolling median (window 15), trailing form for causal evaluation.
+
+### 3.3 Step C: Bounded monotone latent-state learner
+
+Encoder-decoder:
+
+$$
+h_t = E_\theta(\bar z_t) = \sigma(f_\theta(\bar z_t)) \in (0,1)^2,
 \qquad
-D_\phi:\; (0,1)^2 \xrightarrow{\,\text{Lin}(16)\,\tanh\,\text{Lin}(32)\,\tanh\,\text{Lin}(m)\,} \mathbb{R}^m .
+\hat z_t = D_\phi(h_t).
 $$
 
-The sigmoid makes the latent **bounded by construction** — the cornerstone of
-Theorem 2. Training minimizes a ceiling-weighted reconstruction loss plus two
-physics penalties on the first health coordinate $h_0$:
+Loss:
 
 $$
-\mathcal{L} \;=\; \underbrace{\sum_j w_j\,\big\|x_{\cdot,j}-\hat x_{\cdot,j}\big\|^2}_{\text{weighted reconstruction}}
-\;+\; \underbrace{\lambda_{\text{mono}}\sum_t \mathrm{ReLU}(-\Delta h_{0,t})}_{\text{monotonicity, }\lambda=5.0}
-\;+\; \underbrace{\lambda_{\text{smooth}}\sum_t (\Delta h_{0,t})^2}_{\text{smoothness, }\lambda=2.0},
+\mathcal{L}
+=
+\underbrace{\sum_j w_j\|\hat z_{t,j}-z_{t,j}\|^2}_{\text{reconstruction}}
++
+\lambda_{\text{mono}}\sum_t \mathrm{ReLU}(-\Delta h_{0,t})
++
+\lambda_{\text{smooth}}\sum_t (\Delta h_{0,t})^2.
 $$
 
-where $\Delta h_{0,t}=h_{0,t}-h_{0,t-1}$. The monotonicity penalty pushes $h_0$
-to increase with wear; the smoothness penalty bounds its curvature $\kappa$ —
-exactly the quantity Theorem 3 needs. $h_0$ is oriented (flipped if needed) so
-that it *increases* with cycle. Optimizer: Adam, $\text{lr}=5\!\times\!10^{-3}$,
-full-batch, $4000$ epochs. The manifold is trained **once** per dataset and
-cached to `experiments/artifacts/FD00<fd>/`.
+Constants: $\lambda_{\text{mono}}=5.0$, $\lambda_{\text{smooth}}=2.0$, $k=2$.
 
-### 4.5 Rollout (forward simulation)
+Interpretation:
 
-From an anchor cycle $c$ with health velocity $\nu = h_c - h_{c-1}$, the
-manifold rollout is a clipped constant-velocity extrapolation **in latent
-space**, decoded back to sensors:
+1. $h_0$ is a learned monotone degradation proxy.
+2. $h_1$ is a learned auxiliary mode.
+3. Neither is claimed to be a physical health measurement.
+
+### 3.4 Formal result 1: effective low-dimensional sufficiency
+
+**Lemma 1.** If $\bar z_t = g(u_t)+\eta_t$ with $\mathrm{rank}(\mathrm{Cov}(g(u_t)))\le d$ and $\mathrm{Cov}(\eta_t)\preceq \varepsilon^2 I$, then
 
 $$
-h_t = \operatorname{clip}_{[0,1]}\!\big(h_c + (t-c)\,\nu\big), \qquad \hat x_t = D_\phi(h_t).
+\rho_d := \frac{\sum_{i=1}^{d}\lambda_i}{\sum_{i=1}^{m}\lambda_i}
+\ge
+1 - \frac{(m-d)\varepsilon^2}{\sum_{i=1}^{m}\lambda_i}.
 $$
 
-We compare against the natural alternative — a **sensor-space VAR**
-$z_{t+1}=A z_t + b$ fit by least squares. Section 5 shows why the VAR is
-unstable and the manifold rollout is not.
+**Proof.** Signal covariance contributes at most rank $d$. Trailing eigenvalues are bounded by noise via Weyl inequalities. Summing trailing mass gives $\sum_{i=d+1}^{m}\lambda_i \le (m-d)\varepsilon^2$. Rearrangement yields the bound. $\square$
 
-### 4.6 Health$\to$RUL regression
+Implication: high empirical $\rho_2$ supports using $k=2$ as sufficient latent dimension.
 
-The final estimator is a gradient-boosted tree
-(`HistGradientBoostingRegressor`, `max_depth=3`, `learning_rate=0.05`,
-`max_iter=400`, `l2_regularization=1.0`) mapping the four-dimensional feature
-$(h_0, h_1, \dot h_0, \dot h_1)$ — health levels and their causal velocities —
-to RUL, with the standard $\text{RUL}_\text{cap}=125$ piecewise-linear target.
-We contrast it with a **naive threshold-crossing** estimator (forecast $h_0$ to
-a learned failure threshold) to show that the *regression on the state*, not
-the threshold heuristic, is what works.
+### 3.5 Formal result 2: sensor-space linear rollout can diverge
+
+Consider free-running linear rollout in residual space:
+
+$$
+\hat z_{t+1} = A\hat z_t + b.
+$$
+
+**Theorem 1.** If error follows $e_{t+1}=Ae_t+r_t$, then
+
+$$
+e_t = A^t e_0 + \sum_{s=0}^{t-1} A^s r_{t-1-s}.
+$$
+
+If $\rho(A)>1$, geometric growth in $\|A^t\|$ yields unbounded long-horizon error unless perturbations are exactly canceled.
+
+**Proof.** Use unrolled recursion above and Gelfand formula $\lim_{t\to\infty}\|A^t\|^{1/t}=\rho(A)$. For $\rho(A)>1$, homogeneous term grows geometrically and dominates bounded perturbation sum asymptotically. $\square$
+
+Implication: unconstrained sensor-space autoregression is structurally unstable at long horizons when $\rho>1$.
+
+### 3.6 Formal result 3: bounded latent rollout
+
+Latent rollout from cutoff $c$ with local velocity $\nu$:
+
+$$
+h_t = \mathrm{clip}_{[0,1]^2}\big(h_c + (t-c)\nu\big),
+\qquad
+\hat z_t = D_\phi(h_t).
+$$
+
+**Theorem 2.** If decoder $D_\phi$ is $L_D$-Lipschitz on $[0,1]^2$, then
+
+$$
+\|\hat z_t\| \le \|D_\phi(\tfrac12\mathbf{1})\| + L_D\frac{\sqrt2}{2} =: B < \infty,
+\quad \forall t.
+$$
+
+**Proof.** Since $h_t \in [0,1]^2$, distance to center $\tfrac12\mathbf{1}$ is at most $\sqrt2/2$. Lipschitz continuity bounds decoded deviation from center decode value; triangle inequality gives finite uniform bound $B$. $\square$
+
+Implication: latent rollout cannot diverge regardless of horizon.
+
+### 3.7 Formal result 4: polynomial latent forecast error
+
+Constant-velocity forecast for scalar proxy $h_0$:
+
+$$
+\hat h_{0,c+t} = h_{0,c} + t(h_{0,c}-h_{0,c-1}).
+$$
+
+**Theorem 3.** If $|\Delta^2 h_{0,s}|\le\kappa$, then
+
+$$
+|h_{0,c+t} - \hat h_{0,c+t}| \le \frac{\kappa}{2}t^2.
+$$
+
+**Proof.** Write increment sequence $\delta_s=h_{0,c+s}-h_{0,c+s-1}$. Error equals $\sum_{s=1}^{t}(\delta_s-\delta_0)$. Each increment gap is sum of bounded second differences, so $|\delta_s-\delta_0|\le s\kappa$. Summing gives quadratic bound. $\square$
+
+Implication: latent forecast error grows polynomially, not exponentially.
+
+### 3.8 Formal result 5: irreducible reconstruction ceiling
+
+**Theorem 4.** For $x_i=\bar x_i+\eta_i$ with independent noise variance $\sigma_i^2$,
+
+$$
+R_i^2 \le 1 - \frac{\sigma_i^2}{\mathrm{Var}(x_i)}.
+$$
+
+**Proof.** Minimal achievable residual variance equals irreducible noise $\sigma_i^2$. Substitute into $R^2=1-\mathrm{MSE}/\mathrm{Var}(x)$. $\square$
+
+Implication: noisy channels should not dominate reconstruction targets.
+
+### 3.9 RUL map in latent level and velocity
+
+Feature vector:
+
+$$
+\phi_t = (h_{0,t}, h_{1,t}, \dot h_{0,t}, \dot h_{1,t}).
+$$
+
+RUL estimator: HistGradientBoostingRegressor on $\phi_t$.
+
+**Proposition 5.** If degradation progression is monotone in latent proxy $h_0$ toward failure set $\{h_0\ge\tau\}$, then $g(\eta)=\mathbb{E}[\mathrm{RUL}\mid h_0=\eta]$ is non-increasing in $\eta$.
+
+**Proof sketch.** Higher $h_0$ corresponds to states stochastically closer to threshold crossing; expected remaining cycles cannot increase. Velocity resolves same-level different-rate ambiguity. $\square$
+
+Implication: supervised mapping from latent level and rate to RUL is justified.
+
+### 3.10 Pseudocode
+
+```text
+Input: trajectories {(settings, sensors)}; run-to-failure train; truncated test
+Output: RUL predictions and validation metrics
+
+1. infer regimes from settings
+2. condition-normalize sensors
+3. trend-select channels + denoise
+4. train bounded monotone AE -> latent h
+5. evaluate rollout stability (VAR vs latent rollout)
+6. evaluate latent forecastability
+7. train latent->RUL regressor
+8. evaluate on official test subsets
+```
+
+### 3.11 Explicit latent proxy statement (required)
+
+The latent variables discovered by this algorithm are proxies for health and not actual physical health variables. We do not claim to discover physically meaningful health variables. We do claim to discover hidden latent dynamics of the system and explain their dynamics mathematically and empirically.
 
 ---
 
-## 5. Theory
+## 4. Full Methodology
 
-All proofs are in [docs/THEORY.md](docs/THEORY.md); we state the results and
-their cross-dataset empirical hooks here.
-
-### Lemma 1 — Identifiability of a 2-D health manifold
-
-If the denoised, condition-normalized sensors lie (up to per-coordinate noise
-$\varepsilon^2$) on a $d$-dimensional curve, the cumulative PCA variance obeys
-
-$$
-\rho_d \;\ge\; 1 - \frac{(m-d)\,\varepsilon^2}{\sum_i \lambda_i}.
-$$
-
-With $d=2$ this is the identifiability premise. **Empirically**, $\rho_2$
-ranges $0.795$ (FD002) to $0.965$ (FD001) — a 2-D health state is sufficient
-even in the 6-regime case once the staircase is normalized away.
-
-### Theorem 1 — Sensor-space autoregression is unstable (negative result)
-
-For a free-running predictor $\hat z_{t+1}=F(\hat z_t)$ with Jacobian $J$, the
-rollout error grows as
-
-$$
-\|e_t\| \sim \rho(J)^{\,t}\,\|e_0\|.
-$$
-
-If $\rho(J)>1$ the error is **unbounded**. **Empirically**, the fitted VAR has
-$\rho(A) = 1.014\text{–}1.020 > 1$ on *all four* datasets, and free-runs to
-$25\times$ (FD004) up to $760\times$ (FD001) its initial norm. (See the
-free-run growth panel in the summary figure.)
-
-### Theorem 2 — Manifold rollout is bounded (positive result)
-
-With a logistic latent $h_t\in(0,1)^k$ and an $L_D$-Lipschitz decoder,
-
-$$
-\|\hat x_t\| \;\le\; \big\|D_\phi(\tfrac12\mathbf 1)\big\| + L_D\frac{\sqrt k}{2} \;=:\; B < \infty \quad \forall t.
-$$
-
-The decoded trajectory **cannot blow up at any horizon**. The contrast with
-Theorem 1 is the central structural claim: *the VAR provably can diverge, the
-manifold provably cannot.* Confirmed on all four datasets (the manifold
-free-run trace stays flat while the VAR's explodes).
-
-### Theorem 3 — Polynomial forecast error for a smooth, monotone health state
-
-If $|\Delta^2 h_0|\le\kappa$, the constant-velocity forecast error obeys
-
-$$
-\big|h_{c+t}-\hat h_{c+t}\big| \;\le\; \frac{\kappa}{2}\,t^2 .
-$$
-
-Polynomial, never exponential. The smoothness penalty (Section 4.4) is what
-makes $\kappa$ small: measured $\kappa \approx 2.9\text{–}3.7\times10^{-4}$
-across datasets. This is why constant-velocity extrapolation **in health
-space** beats persistence, while autoregression **in sensor space** explodes.
-
-> **Corroborating evidence.** An unconstrained AR(2) forecaster (no curvature
-> control) numerically explodes on the harder datasets — its skill collapses to
-> $\sim\!-10^{13}$ on FD003. This is Theorem 1 playing out in miniature and is
-> exactly the pathology the bounded, smooth health coordinate avoids.
-
-### Theorem 4 — Irreducible $R^2$ ceiling
-
-For $x_i=\bar x_i+\eta_i$ with noise variance $\sigma_i^2$,
-
-$$
-R^2_i \le 1 - \frac{\sigma_i^2}{\operatorname{Var}(x_i)}.
-$$
-
-This justifies dropping noise-limited channels during sensor selection
-(Section 4.2) rather than forcing the autoencoder to model pure noise.
-
-### Proposition 5 — A monotone health$\to$RUL map exists
-
-If $h_0$ is strictly monotone in wear and degradation is stochastically
-monotone toward $\{h_0\ge\tau\}$, then $g(\eta)=\mathbb E[\text{RUL}\mid h_0=\eta]$
-is non-increasing, and RUL is identifiable from $(h_0,\dot h_0)$. **Empirically**
-the binned $\mathbb E[\text{RUL}\mid h_0]$ curve is cleanly monotone, and the
-supervised map (Section 4.6) realizes it.
-
-### Logical chain
+This section is written as a research-methods narrative: it explains what each
+component does, why it is required, and how all components compose into a
+single end-to-end system.
 
 ```mermaid
 flowchart TD
-    L1["Lemma 1: 2-D health identifiable (rho_2 = 0.80-0.97)"] --> T2
-    T1["Theorem 1: VAR error ~ rho^t, rho>1 (UNBOUNDED)"]
-    T2["Theorem 2: manifold rollout bounded by B (sigmoid + Lipschitz)"]
-    T1 -. "decisive contrast" .-> T2
-    T2 --> T3["Theorem 3: const-velocity error <= (kappa/2) t^2 (POLYNOMIAL)"]
-    T3 --> P5["Proposition 5: monotone health -> RUL map exists"]
-    T4["Theorem 4: R2 ceiling = 1 - sigma^2/Var"] --> P5
-    P5 --> C["RUL: R2 = 0.74-0.88 on all four datasets"]
+	A[Raw trajectories: settings + sensors] --> B[Operating-condition normalization]
+	B --> C[Trend-based channel selection]
+	C --> D[Robust denoising]
+	D --> E[Bounded monotone latent-state learning]
+	E --> F[Latent rollout and forecasting tests]
+	E --> G[Latent-to-RUL regression]
+	F --> H[Stability and forecastability evidence]
+	G --> I[RUL utility evidence]
+```
+
+### 4.1 Data protocol and split design
+
+For each FD subset, the train and test trajectory tables are loaded and sorted
+by `(unit_id, cycle)` to preserve temporal causality. Two split concepts are
+used in this study. First, official C-MAPSS train/test separation is respected
+for reported RUL evaluation. Second, an internal engine-disjoint 80/20 split is
+used for intermediate analyses such as manifold reconstruction and stability
+audits. Engine-disjoint splitting is essential: row-wise random splitting would
+leak one engine's future profile into training and artificially inflate
+forecasting and reconstruction claims.
+
+### 4.2 Operating-condition normalization: purpose and mechanics
+
+Raw channels contain two superimposed effects: degradation dynamics and
+operating-regime shifts. The latter appear as staircase offsets in FD002/FD004
+and can dominate variance if untreated. The methodology therefore estimates
+regimes from operating settings, computes per-regime means, and scales by
+within-regime dispersion:
+
+$$
+z_{t,j} = \frac{x_{t,j} - \mu_{j,c_t}}{s_j}.
+$$
+
+This step converts each channel to a common-scale residual interpreted as
+"deviation from nominal under current operating condition." Without this step,
+the model tends to learn condition signatures instead of degradation dynamics.
+
+### 4.3 Channel selection and denoising
+
+Not all channels carry degradation information. To isolate informative dynamics,
+each channel is scored by average per-engine correlation magnitude with cycle
+index. Channels above 0.20 are retained as dynamic model inputs, while channels
+above 0.50 define the informative reconstruction set used for reporting.
+
+Temporal denoising is then applied with a rolling median (`window=15`) per
+engine. Median filtering is chosen instead of mean filtering because it is more
+robust to spikes and transient outliers. For forecasting and test-time feature
+construction, trailing windows are used so no future information leaks into the
+current timestep estimate.
+
+### 4.4 Latent-state model and training objective
+
+The representation model is a 2D autoencoder with sigmoid latent head,
+producing $h_t\in(0,1)^2$. The training objective combines channel-weighted
+reconstruction with two structural penalties on $h_0$: a monotonicity penalty
+discouraging negative increments and a smoothness penalty discouraging high
+local curvature. In compact form:
+
+$$
+\mathcal{L} =
+\sum_j w_j\|\hat z_{t,j}-z_{t,j}\|^2
++ \lambda_{\text{mono}}\sum_t \mathrm{ReLU}(-\Delta h_{0,t})
++ \lambda_{\text{smooth}}\sum_t (\Delta h_{0,t})^2.
+$$
+
+The model is trained with fixed hyperparameters across all datasets
+(`K=2`, `EPOCHS=4000`, `LR=5e-3`, `LAMBDA_MONO=5.0`,
+`LAMBDA_SMOOTH=2.0`), ensuring that cross-dataset differences reflect data
+difficulty rather than per-dataset tuning.
+
+### 4.5 Latent rollout and forecasting subsystem
+
+Given a cutoff cycle $c$, local latent velocity is estimated from trailing
+history and rollout proceeds in latent space by constant-velocity propagation
+with clipping to $[0,1]^2$, followed by decoding to residual sensor space.
+This is compared against a sensor-space linear VAR free-run baseline.
+
+Forecastability is tested using multiple forecasters (persistence,
+constant-velocity, linear, quadratic, AR2) across horizons. The key design
+principle is comparative, not absolute: a latent forecaster must beat
+persistence to be considered useful.
+
+### 4.6 RUL mapping subsystem
+
+RUL prediction uses causal latent features
+$(h_0,h_1,\dot h_0,\dot h_1)$ and HistGradientBoostingRegressor with fixed
+hyperparameters. The rationale is that latent level captures progression state,
+while latent velocity disambiguates engines at similar level but different
+degradation rates. Performance is reported with RMSE, MAE, $R^2$, NASA score,
+and baseline comparisons.
+
+### 4.7 End-to-end execution and reproducibility
+
+The full workflow is orchestrated by a single driver that runs all experiment
+stages per dataset and writes unified artifacts (CSV/JSON tables and figures).
+Reproducibility is controlled through fixed seeds across numpy/torch/sklearn,
+shared constants across FD001-FD004, and cached per-dataset model artifacts.
+
+```mermaid
+flowchart LR
+	S1[Normalization audit] --> S2[Representation audit]
+	S2 --> S3[Rollout stability audit]
+	S3 --> S4[Forecastability audit]
+	S4 --> S5[RUL utility audit]
 ```
 
 ---
 
-## 6. Experiments
+## 5. Why NASA C-MAPSS is suitable for this algorithm
 
-Four experiments, one per pipeline stage, run identically on each dataset:
+### 5.1 Structural suitability
 
-| Exp | Question | Script | Key output |
-|---|---|---|---|
-| **0 — Discovery** | Is a 2-D health state identifiable? | `exp_discovery.py` | PCA $\rho_2$, recon $R^2$; figs D1–D2 |
-| **A — Rollout stability** | Is forward simulation bounded? | `exp_rollout_stability.py` | $\rho(A)$, free-run growth; figs A1–A4 |
-| **B — Health forecasting** | Can health be forecast? | `exp_health_forecasting.py` | skill vs persistence; figs B1–B3 |
-| **C — RUL prediction** | Does it predict RUL? | `exp_rul_prediction.py` | RMSE, $R^2$, NASA score; figs C1–C3 |
+C-MAPSS is suitable because it provides:
 
-All four share `experiments/manifold_core.py`, which performs condition
-normalization, sensor selection, and trains/caches the manifold once per
-dataset. The single driver `experiments/run_all.py` runs the whole grid.
+1. run-to-failure trajectories (needed for monotone progression learning),
+2. truncated test trajectories with ground-truth RUL,
+3. operating-condition variation (1 vs 6 regimes),
+4. fault variation (1 vs 2 fault modes).
 
----
+### 5.2 Dataset facts and source
 
-## 7. Results — per stage
+| Dataset | Regimes | Fault modes | Train | Test |
+|---|---:|---:|---:|---:|
+| FD001 | 1 | 1 | 100 | 100 |
+| FD002 | 6 | 1 | 260 | 259 |
+| FD003 | 1 | 2 | 100 | 100 |
+| FD004 | 6 | 2 | 249 | 248 |
 
-The figures below are shown for FD001 (the cleanest case); the identical figure
-set for every dataset lives in `docs/figures/FD00<fd>/`.
+Source: [CMaps/readme.txt](CMaps/readme.txt), Saxena et al. PHM08.
 
-### 7.1 Discovery
+### 5.3 Preliminary suitability evidence in this work
 
-A single normalized operating condition collapses degradation onto a 2-D
-manifold; the constrained autoencoder recovers a monotone health trajectory.
+1. Regime detection from settings is clean and stable.
+2. Post-normalization PCA retains strong 2D sufficiency ($\rho_2$ high across subsets).
+3. Trend selection yields consistent degradation-bearing channel sets (14-15 channels).
 
-![Health trajectories](docs/figures/FD001/D1_health_trajectories.png)
-![Manifold + PCA scree](docs/figures/FD001/D2_manifold.png)
-
-### 7.2 Rollout stability (the headline structural result)
-
-The VAR eigenvalues sit outside the unit circle ($\rho>1$) and the free run
-diverges geometrically; the manifold free-run stays flat — exactly the
-Theorem 1 vs Theorem 2 dichotomy.
-
-![VAR eigenvalues](docs/figures/FD001/A2_var_eigenvalues.png)
-![Free-run divergence](docs/figures/FD001/A4_free_run_divergence.png)
-
-> **Honest caveat (read Section 9).** At the *short, scored* horizons
-> ($h\le 25$) the VAR is a near-perfect 1-step predictor on the smooth denoised
-> trend and is comparable to (sometimes better than) the manifold; the
-> autoencoder pays a fixed $\sim$5–7% reconstruction-floor NRMSE at every
-> horizon. The manifold's advantage is **provable boundedness over long
-> horizons**, not short-horizon accuracy.
-
-### 7.3 Health forecasting
-
-Constant-velocity extrapolation in health space stays under the
-$\tfrac{\kappa}{2}t^2$ envelope and beats persistence.
-
-![Error vs horizon](docs/figures/FD001/B2_error_vs_horizon.png)
-![Skill vs persistence](docs/figures/FD001/B3_skill_vs_persistence.png)
-
-### 7.4 RUL prediction
-
-The binned $\mathbb E[\text{RUL}\mid h_0]$ map is monotone; the supervised
-regressor on $(h_0,h_1,\dot h_0,\dot h_1)$ predicts RUL well below the baseline,
-while the naive threshold-crossing estimator fails.
-
-![RUL scatter](docs/figures/FD001/C1_rul_scatter.png)
-![Health vs RUL](docs/figures/FD001/C3_health_vs_rul.png)
+Conclusion: C-MAPSS is suitable to evaluate this latent-dynamics algorithm.
 
 ---
 
-## 8. Cross-dataset results (FD001–FD004)
+## 6. Experiments and Results
 
-The complete grid, produced by `experiments/run_all.py`
-(`experiments/artifacts/cross_dataset_results.csv`):
+### 6.1 Experimental design and test logic
+
+The evaluation is organized as a progressive audit in which each experiment
+tests one specific claim and provides evidence needed by the next stage. The
+sequence is: (i) latent identifiability, (ii) rollout stability,
+(iii) forecastability of latent dynamics, and (iv) RUL utility. This ordering
+prevents over-claiming: RUL performance is only interpreted after validating
+that the latent dynamics are structurally well-behaved.
+
+```mermaid
+flowchart LR
+	E0[Exp 0: Identifiability] --> EA[Exp A: Rollout Stability]
+	EA --> EB[Exp B: Forecastability]
+	EB --> EC[Exp C: RUL Utility]
+```
+
+### 6.2 What each experiment does (full description)
+
+**Experiment 0 (Identifiability/Discovery).**
+This test evaluates whether a 2D latent state is sufficient after condition
+normalization. It computes PCA variance concentration ($\rho_2$),
+sensor-reconstruction quality on informative channels, and latent trajectory
+shape across engines. The role of this experiment is to verify that the
+representation problem is not under-specified before moving to dynamic tests.
+
+**Experiment A (Rollout Stability).**
+This test compares long-horizon free-running behavior of two systems: sensor
+VAR and latent rollout. It quantifies spectral radius, free-run norm growth,
+and horizon-wise degradation. This is the operational test of Theorems 1 and 2:
+if $\rho(A)>1$, sensor rollout can diverge; latent rollout must remain bounded.
+
+**Experiment B (Forecastability).**
+This test asks whether latent dynamics are predictable from past state.
+Multiple forecasters are evaluated against persistence over increasing horizons.
+Constant-velocity skill and curvature proxy ($\kappa$) are interpreted together
+to connect empirical behavior with Theorem 3.
+
+**Experiment C (RUL Utility).**
+This test evaluates whether latent level and latent rate provide actionable RUL
+signal. It compares a supervised latent-to-RUL model against mean baseline and
+naive threshold crossing. The key output is utility, not physical meaning.
+
+### 6.3 Claim-to-test mapping
+
+| Formal claim | Test evidence |
+|---|---|
+| Lemma 1 | PCA $\rho_2$ + reconstruction $R^2$ |
+| Theorem 1 | VAR $\rho(A)>1$, free-run growth |
+| Theorem 2 | bounded latent rollout traces |
+| Theorem 3 | latent forecast skill + error-horizon behavior |
+| Proposition 5 | latent+velocity RUL regression performance |
+
+### 6.4 Cross-dataset summary (FD001-FD004)
 
 ![Cross-dataset summary](docs/figures/SUMMARY_cross_dataset.png)
 
-### 8.1 Master results table
+| Metric | FD001 | FD002 | FD003 | FD004 |
+|---|---:|---:|---:|---:|
+| PCA $\rho_2$ | 0.965 | 0.795 | 0.851 | 0.849 |
+| Recon mean $R^2$ | 0.930 | 0.865 | 0.960 | 0.930 |
+| VAR $\rho(A)$ | 1.020 | 1.016 | 1.018 | 1.015 |
+| VAR free-run growth | 760x | 468x | 58x | 25x |
+| Forecast skill at $k=20$ | +0.751 | +0.680 | +0.522 | +0.157 |
+| RUL RMSE | 14.53 | 27.02 | 16.31 | 27.58 |
+| RUL $R^2$ | 0.878 | 0.748 | 0.845 | 0.744 |
+| Baseline RMSE | 43.07 | 54.08 | 45.07 | 54.90 |
+
+### 6.5 Boundedness, Rollout, and Stability Results (expanded)
+
+These are the key stability outcomes that motivated the latent-dynamics design:
+
+| Stability metric | FD001 | FD002 | FD003 | FD004 |
+|---|---:|---:|---:|---:|
+| VAR spectral radius $\rho(A)$ | 1.0197 | 1.0163 | 1.0176 | 1.0145 |
+| VAR free-run norm | 3107.80 | 882.55 | 152.83 | 79.69 |
+| Latent rollout free-run norm | 5.99 | 2.29 | 4.33 | 3.58 |
+| VAR growth factor | 759.95x | 467.72x | 57.62x | 25.03x |
+| Max manifold rollout NRMSE | 2.17 | 4.99 | 1.96 | 2.00 |
+
+Interpretation of the table:
+
+1. All four datasets have $\rho(A)>1$, so VAR instability is structural.
+2. Free-run growth confirms geometric expansion in sensor-space rollout.
+3. Latent rollout stays bounded with small free-run norm, matching Theorem 2.
+4. The absolute gap between VAR and latent free-run norms is large in every
+	dataset, which is the practical stability contribution of the method.
+
+Beyond the aggregate table, the qualitative trajectory behavior is also
+diagnostic: VAR free-runs exhibit outward norm drift and eventual instability,
+while latent rollouts remain inside a compact decoded envelope. This is exactly
+the intended behavior of the bounded latent container and the strongest
+algorithmic distinction from unconstrained sensor-space rollout.
+
+### 6.6 Horizon-wise and Forecasting Results (expanded)
+
+Additional horizon-level metrics show where the latent method is strongest and
+where linear VAR can still be competitive at short range:
 
 | Metric | FD001 | FD002 | FD003 | FD004 |
 |---|---:|---:|---:|---:|
-| Operating regimes $R$ | 1 | 6 | 1 | 6 |
-| Fault modes | 1 | 1 | 2 | 2 |
-| Train / test units | 100 / 100 | 260 / 259 | 100 / 100 | 249 / 248 |
-| Informative sensors | 14 | 15 | 15 | 15 |
-| **Discovery** PCA $\rho_2$ | 0.965 | 0.795 | 0.851 | 0.849 |
-| **Discovery** recon mean $R^2$ | 0.930 | 0.865 | 0.960 | 0.930 |
-| **Rollout** VAR $\rho(A)$ | 1.020 | 1.016 | 1.018 | 1.015 |
-| **Rollout** VAR free-run growth | $760\times$ | $468\times$ | $58\times$ | $25\times$ |
-| **Rollout** manifold bounded? | ✓ | ✓ | ✓ | ✓ |
-| **Forecast** skill vs persistence ($k{=}20$) | $+0.751$ | $+0.680$ | $+0.522$ | $+0.157$ |
-| **RUL** RMSE | **14.53** | **27.02** | **16.31** | **27.58** |
-| **RUL** MAE | 11.02 | 18.61 | 12.44 | 20.19 |
-| **RUL** $R^2$ | **0.878** | **0.748** | **0.845** | **0.744** |
-| **RUL** NASA score | 380.8 | 8692 | 615 | 6088 |
-| Mean-RUL baseline RMSE | 43.07 | 54.08 | 45.07 | 54.90 |
-| Naive threshold-crossing RMSE | 39.46 | 39.64 | 87.14 | 102.29 |
+| $R^2_{\text{manifold},h=10}$ | 0.877 | -0.438 | 0.912 | 0.843 |
+| $R^2_{\text{VAR},h=10}$ | 0.887 | 0.642 | 0.910 | 0.878 |
+| $R^2_{\text{manifold},h=25}$ | 0.821 | -4.256 | 0.885 | 0.727 |
+| $R^2_{\text{VAR},h=25}$ | 0.854 | 0.665 | 0.850 | 0.810 |
+| $\kappa$ (latent curvature proxy) | 3.74e-4 | 3.62e-4 | 3.09e-4 | 2.89e-4 |
+| CV skill at $k=10$ | 0.710 | 0.520 | 0.357 | 0.022 |
+| CV skill at $k=50$ | 0.688 | 0.577 | 0.427 | -0.216 |
 
-### 8.2 What the table says
+Interpretation of horizon-wise behavior:
 
-1. **Health$\to$RUL beats the mean baseline on every dataset** — by $3\times$ on
-   the easy corner (FD001: $14.5$ vs $43.1$) and still by $2\times$ on the hard
-   corner (FD004: $27.6$ vs $54.9$).
-2. **The boundedness dichotomy holds universally.** The VAR has $\rho(A)>1$ and
-   free-runs to $25$–$760\times$ on every dataset; the manifold rollout is
-   bounded on every dataset.
-3. **Difficulty tracks the regime$\times$fault grid.** $R^2$ degrades
-   monotonically from the easy corner (FD001, $0.878$) to the hard corner
-   (FD004, $0.744$), and forecasting skill drops from $+0.75$ to $+0.16$ —
-   exactly as expected when six flight conditions and two fault modes are
-   superimposed. The method still works; it is simply harder.
-4. **The threshold heuristic is not what carries the result.** Naive
-   threshold-crossing is *worse than the mean baseline* on FD003/FD004
-   ($87$–$102$ RMSE) — the supervised regression on the state is doing the work.
+1. At short horizons, VAR can match or exceed manifold $R^2$ on several sets.
+2. The algorithm's main win is guaranteed bounded rollout, not universal
+	short-horizon dominance.
+3. Constant-velocity latent forecasting remains useful for most sets/horizons,
+	with harder degradation diversity in FD004 reducing long-horizon skill.
+4. AR2 instability observed in prior experiments is consistent with the
+	spectral-radius warning in Theorem 1.
 
----
+Methodologically, this section demonstrates that rollout stability and
+forecastability are related but distinct properties: bounded rollout guarantees
+non-explosive behavior, while forecast skill quantifies short-to-medium horizon
+accuracy. The algorithm is designed to guarantee the former and optimize the
+latter without sacrificing structural constraints.
 
-## 9. Discussion
+### 6.7 RUL Utility Results (expanded)
 
-**Where the manifold wins, and where it doesn't.** Our strongest, *provable*
-claim is structural: the manifold rollout is bounded for all horizons while the
-sensor-space VAR is not. At the short horizons used for scoring, however, the
-VAR is a strong one-step predictor and the autoencoder's reconstruction floor
-(a $15\!\to\!2\!\to\!15$ bottleneck leaves $\sim$7% residual variance) costs a
-roughly constant NRMSE offset at every horizon. So the honest framing is:
-*the manifold buys interpretability and long-horizon stability, not a free
-lunch on 1-step accuracy.*
+| RUL metric | FD001 | FD002 | FD003 | FD004 |
+|---|---:|---:|---:|---:|
+| RMSE | 14.53 | 27.02 | 16.31 | 27.58 |
+| MAE | 11.02 | 18.61 | 12.44 | 20.19 |
+| $R^2$ | 0.878 | 0.748 | 0.845 | 0.744 |
+| NASA score | 380.83 | 8692.14 | 615.16 | 6088.45 |
+| Baseline RMSE | 43.07 | 54.08 | 45.07 | 54.90 |
+| Threshold RMSE | 39.46 | 39.64 | 87.14 | 102.29 |
 
-**Multi-regime difficulty.** FD002/FD004 are harder because the degradation
-residual must be extracted from six superimposed flight conditions. Condition
-normalization (Section 4.1) is what makes the single architecture work at all
-here; without it the staircase dominates PCA and the 2-D assumption fails.
+Takeaways:
 
-**AR(2) blow-up corroborates the theory.** The unconstrained AR(2) forecaster's
-numerical explosion on FD003/FD004 is not a bug to hide — it is Theorem 1 in
-miniature, and it is precisely the failure mode the bounded, smoothness-penalized
-health coordinate is designed to avoid.
+1. Latent-feature RUL mapping beats mean baseline RMSE on all four datasets.
+2. Naive threshold-crossing fails badly on FD003/FD004, validating the need for
+	supervised latent-to-RUL mapping.
+3. Gains persist across the full regime/fault complexity grid.
+
+This experiment closes the loop: the latent state is not introduced only for
+mathematical elegance, but because its learned dynamics transfer to a practical
+decision variable (RUL) under strict test-time causality.
+
+### 6.8 Interpretation
+
+1. Latent-based RUL prediction beats mean baseline on all four datasets.
+2. Sensor-space VAR is unstable ($\rho>1$) on all four datasets.
+3. Latent rollout remains bounded as predicted by Theorem 2.
+4. Performance generalizes from FD001 to FD004 complexity.
+
+These tests validate predictive utility and latent-dynamics structure, not physical-variable truth.
 
 ---
 
-## 10. Limitations and future work
+## 7. Discussion
 
-- **Reconstruction floor.** The 2-D bottleneck caps short-horizon rollout
-  accuracy. An optional **anchoring/bias correction** — adding the constant
-  reconstruction residual $r_c = x_c - D_\phi(h_c)$ to every decoded step —
-  would remove the fixed offset without touching the boundedness guarantee.
-  (Not implemented here; left as the obvious next experiment.)
-- **Regime count is supplied.** We use the known $R$ (1 or 6). A model-selection
-  pass (e.g. silhouette / BIC over $R$) would make the pipeline fully
-  unsupervised in the operating dimension.
-- **NASA score sensitivity.** The asymmetric NASA score is dominated by a few
-  late-prediction engines on the multi-regime sets; quantile or
-  uncertainty-aware RUL heads are a natural extension of Proposition 5.
+Strengths:
+
+1. stable latent rollout mechanism,
+2. interpretable latent-proxy progression,
+3. portability across regime/fault complexity.
+
+Limitations in behavior:
+
+1. short-horizon sensor-space AR can be competitive,
+2. 2D bottleneck imposes reconstruction floor,
+3. latent interpretability is functional, not physical.
 
 ---
 
-## 11. Reproducibility
+## 8. Limitations
+
+### 8.1 Latent interpretation caveat
+
+The learned latent coordinates are optimized for predictive objectives under constraints, not validated as true physical degradation coordinates. Physical correspondence would require external ground truth (for example teardown, metallurgy, or component-level measurements), which is outside scope.
+
+### 8.2 Additional limitations
+
+1. $k=2$ is supported as sufficient but not fully ablated for optimality.
+2. Regime count detection is heuristic (rounded settings plus cap).
+3. NASA asymmetric score is sensitive to late predictions.
+
+---
+
+## 9. Reproducibility
 
 ```powershell
-# from the project root, using the project venv
 cd experiments
-..\.venv\Scripts\python.exe run_all.py            # FD001..FD004: discovery + A + B + C
-..\.venv\Scripts\python.exe make_summary_figure.py  # docs/figures/SUMMARY_cross_dataset.png
+..\.venv\Scripts\python.exe run_all.py
+..\.venv\Scripts\python.exe make_summary_figure.py
 ```
 
-`run_all.py` calls `manifold_core.configure(fd, retrain=True)` for each dataset,
-runs all four experiments, and writes
-`experiments/artifacts/cross_dataset_results.{csv,json}`. Every figure is
-regenerated into `docs/figures/FD00<fd>/`. Fixed seed `SEED = 42` throughout;
-key constants `WINDOW = 15`, `K = 2`, `RUL_CAP = 125`,
-`TREND_dynamic = 0.20`, `TREND_informative = 0.50`,
-$\lambda_\text{mono}=5.0$, $\lambda_\text{smooth}=2.0$.
-
-### Repository layout
-
-| Path | Contents |
-|---|---|
-| `experiments/manifold_core.py` | shared core: normalization, selection, manifold |
-| `experiments/exp_discovery.py` | Experiment 0 (discovery) |
-| `experiments/exp_rollout_stability.py` | Experiment A (stability) |
-| `experiments/exp_health_forecasting.py` | Experiment B (forecasting) |
-| `experiments/exp_rul_prediction.py` | Experiment C (RUL) |
-| `experiments/run_all.py` | cross-dataset driver |
-| `experiments/make_summary_figure.py` | summary figure |
-| `docs/THEORY.md` | full theorems + proofs |
-| `docs/{ROLLOUT_STABILITY,HEALTH_FORECASTING,RUL_PREDICTION}.md` | per-experiment writeups |
-| `docs/figures/FD00<fd>/` | per-dataset figures |
-| `docs/figures/SUMMARY_cross_dataset.png` | cross-dataset summary |
+Artifacts are in [experiments/artifacts](experiments/artifacts), figures in [docs/figures](docs/figures).
 
 ---
 
-## 12. Conclusion
+## 10. Conclusion
 
-We built a turbofan prognostic around a *discovered, physics-constrained* health
-manifold rather than a black-box regressor. The latent is bounded and monotone
-by design, which turns "stable forward simulation" into a theorem (Theorem 2)
-that the natural sensor-space alternative provably fails (Theorem 1). The smooth
-health coordinate is forecastable with polynomial error (Theorem 3) and carries
-a monotone map to RUL (Proposition 5). Crucially, the whole pipeline generalizes
-from the single-regime FD001 to the six-regime, two-fault FD002–FD004 through a
-single operating-condition normalization, and **beats a mean-RUL baseline on all
-four C-MAPSS datasets** ($R^2 = 0.744$–$0.878$). The contribution is not a new
-state-of-the-art RMSE; it is a prognostic whose internal dynamics are
-*provably* well-behaved and *empirically* portable across operating regimes and
-fault modes.
+This work contributes an algorithm for RUL prediction based on learned bounded-monotone latent dynamics, with formal guarantees and cross-dataset validation on NASA C-MAPSS. The key value is not a claim of physical variable discovery; it is a mathematically structured latent representation that yields stable rollout behavior and strong predictive utility across regime and fault complexity.
