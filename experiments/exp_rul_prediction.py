@@ -111,9 +111,10 @@ def score(true: np.ndarray, pred: np.ndarray) -> dict:
 
 
 # ============================= main pipeline ============================== #
-def main() -> None:
+def main(fd: int = 1) -> dict:
+    mc.configure(fd)
     print("=" * 78)
-    print("EXPERIMENT C  --  RUL FROM THE FORECASTABLE HEALTH STATE")
+    print(f"EXPERIMENT C  --  RUL FROM THE FORECASTABLE HEALTH STATE  (FD00{fd})")
     print("=" * 78)
     os.makedirs(mc.ART_DIR, exist_ok=True)
     man = mc.get_manifold()
@@ -195,7 +196,7 @@ def main() -> None:
                    "mean_baseline": m_base}, fh, indent=2)
 
     # ------------------------------ figures ------------------------------ #
-    fd = mc.fig_dir()
+    fdir = mc.fig_dir()
 
     # C1 -- predicted vs true scatter + error histogram
     fig, ax = plt.subplots(1, 2, figsize=(13, 5.2))
@@ -219,9 +220,9 @@ def main() -> None:
                     f"bias={err.mean():+.1f}")
     ax[1].grid(alpha=0.3)
     fig.tight_layout()
-    fig.savefig(os.path.join(fd, "C1_rul_scatter.png"), dpi=130)
+    fig.savefig(os.path.join(fdir, "C1_rul_scatter.png"), dpi=130)
     plt.close(fig)
-    print(f"  saved {os.path.join(fd, 'C1_rul_scatter.png')}")
+    print(f"  saved {os.path.join(fdir, 'C1_rul_scatter.png')}")
 
     # C2 -- example engines: causal h0 trajectory + RUL readout
     err_abs = np.abs(pred_reg - rul_true)
@@ -243,9 +244,9 @@ def main() -> None:
     fig.suptitle("Example test engines  --  causal health vs RUL readout",
                  fontsize=14)
     fig.tight_layout()
-    fig.savefig(os.path.join(fd, "C2_examples.png"), dpi=130)
+    fig.savefig(os.path.join(fdir, "C2_examples.png"), dpi=130)
     plt.close(fig)
-    print(f"  saved {os.path.join(fd, 'C2_examples.png')}")
+    print(f"  saved {os.path.join(fdir, 'C2_examples.png')}")
 
     # C3 -- learned health -> RUL surface (h0 & v0 vs RUL on TRAIN)
     fig, ax = plt.subplots(1, 2, figsize=(13, 5.2))
@@ -267,10 +268,17 @@ def main() -> None:
     ax[1].set_title("Monotone health->RUL relationship (train)")
     ax[1].grid(alpha=0.3)
     fig.tight_layout()
-    fig.savefig(os.path.join(fd, "C3_health_vs_rul.png"), dpi=130)
+    fig.savefig(os.path.join(fdir, "C3_health_vs_rul.png"), dpi=130)
     plt.close(fig)
-    print(f"  saved {os.path.join(fd, 'C3_health_vs_rul.png')}")
+    print(f"  saved {os.path.join(fdir, 'C3_health_vs_rul.png')}")
+
+    return dict(fd=fd, threshold=thr,
+                rul_rmse=m_reg["RMSE"], rul_mae=m_reg["MAE"],
+                rul_r2=m_reg["R2"], rul_nasa=m_reg["NASA"],
+                base_rmse=m_base["RMSE"], base_nasa=m_base["NASA"],
+                thr_rmse=m_thr["RMSE"])
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(int(sys.argv[1]) if len(sys.argv) > 1 else 1)

@@ -60,7 +60,7 @@ forecaster is the most reliable across horizons, while `quadratic_recent`
 over-extrapolates and collapses past $k\approx 75$ (a cautionary tale about
 high-order extrapolation).
 
-![Forecast skill vs persistence for h0 and h1](figures/B3_skill_vs_persistence.png)
+![Forecast skill vs persistence for h0 and h1](figures/FD001/B3_skill_vs_persistence.png)
 
 ### 3.2 The error is polynomial, not exponential (Theorem 3)
 
@@ -69,14 +69,14 @@ $h_0$ stays **strictly below** the $\tfrac{\kappa}{2}k^2$ envelope out to 100
 cycles — confirming the quadratic Taylor-remainder rate and ruling out the
 exponential blow-up of sensor-space AR (Theorem 1).
 
-![Forecast error vs horizon with quadratic envelope](figures/B2_error_vs_horizon.png)
+![Forecast error vs horizon with quadratic envelope](figures/FD001/B2_error_vs_horizon.png)
 
 ### 3.3 Qualitative check
 
 Forecasts launched from 50 % life track the true health trajectories of
 individual engines:
 
-![Example health forecasts](figures/B1_health_forecasts.png)
+![Example health forecasts](figures/FD001/B1_health_forecasts.png)
 
 ---
 

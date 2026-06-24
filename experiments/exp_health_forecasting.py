@@ -113,9 +113,10 @@ FORECASTERS = {
 
 
 # --------------------------------------------------------------------------- #
-def main():
+def main(fd: int = 1):
+    mc.configure(fd)
     print("=" * 78)
-    print("EXPERIMENT B  --  AUTOREGRESSIVE HEALTH-STATE FORECASTING")
+    print(f"EXPERIMENT B  --  AUTOREGRESSIVE HEALTH-STATE FORECASTING  (FD00{fd})")
     print("=" * 78)
 
     df = mc.load_split("train")
@@ -191,7 +192,16 @@ def main():
     _plot_examples(examples)
     _plot_error_envelope(res, kappa)
     _plot_skill(res)
-    return res
+
+    def _skill(model, k):
+        r = res[(res.coord == "h0") & (res.model == model) & (res.horizon == k)]
+        return float(r.iloc[0].skill) if len(r) else np.nan
+
+    return dict(fd=fd, kappa=kappa,
+                skill_cv_k10=_skill("const_velocity", 10),
+                skill_cv_k20=_skill("const_velocity", 20),
+                skill_ar2_k20=_skill("ar2", 20),
+                skill_cv_k50=_skill("const_velocity", 50))
 
 
 # --------------------------------------------------------------------------- #
@@ -267,4 +277,5 @@ def _plot_skill(res):
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(int(sys.argv[1]) if len(sys.argv) > 1 else 1)

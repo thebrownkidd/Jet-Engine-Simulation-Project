@@ -119,9 +119,10 @@ def free_run(var, man, g, c0, steps):
 # --------------------------------------------------------------------------- #
 # Experiment
 # --------------------------------------------------------------------------- #
-def main():
+def main(fd: int = 1):
+    mc.configure(fd)
     print("=" * 78)
-    print("EXPERIMENT A  --  ROLLOUT STABILITY AUDIT")
+    print(f"EXPERIMENT A  --  ROLLOUT STABILITY AUDIT  (FD00{fd})")
     print("=" * 78)
 
     df = mc.load_split("train")
@@ -217,7 +218,20 @@ def main():
           f"manifold ||state|| -> {man_norm[-1]:.2f} (bounded)")
     print(f"  manifold NRMSE stays bounded (max={res['nrmse_manifold'].max():.2f}); "
           f"VAR free-run diverges; rho(A)={var['rho']:.3f} > 1")
-    return res, var
+
+    def _r2_at(h):
+        r = res[res.horizon == h]
+        return (float(r.iloc[0].r2_manifold), float(r.iloc[0].r2_var)) if len(r) else (np.nan, np.nan)
+
+    r2m_10, r2v_10 = _r2_at(10)
+    r2m_25, r2v_25 = _r2_at(25)
+    return dict(fd=fd, rho_var=float(var["rho"]),
+                manifold_nrmse_max=float(res["nrmse_manifold"].max()),
+                var_freerun_norm=float(var_norm[-1]),
+                man_freerun_norm=float(man_norm[-1]),
+                var_freerun_growth=float(var_norm[-1] / var_norm[0]),
+                r2_manifold_h10=r2m_10, r2_var_h10=r2v_10,
+                r2_manifold_h25=r2m_25, r2_var_h25=r2v_25)
 
 
 # --------------------------------------------------------------------------- #
@@ -295,7 +309,9 @@ def _plot_eigs(eig, rho):
 
 
 def _plot_examples(ex):
-    show = ["s9", "s11", "s4", "s14", "s12", "s7"]
+    show = [s for s in ["s9", "s11", "s4", "s14", "s12", "s7"]
+            if s in mc.DYNAMIC]
+    show = (show + [s for s in mc.INFORMATIVE if s not in show])[:6]
     cyc = ex["cycles"]
     c0 = ex["c0"]
     steps = ex["var_roll"].shape[0]
@@ -327,4 +343,5 @@ def _plot_examples(ex):
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(int(sys.argv[1]) if len(sys.argv) > 1 else 1)

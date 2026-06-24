@@ -103,8 +103,8 @@ forcing series converges, so $\sup_t\|e_t\|<\infty$. $\;\blacksquare$
 $\rho(A) = 1.0197 > 1$. The free-running rollout therefore diverges: over 400
 steps past the data the standardized state norm grows from $4.2$ to
 $\approx 3.1\times10^{3}$ (a factor $\sim\!800$), tracking the $\rho(A)^t$
-envelope. See [`A2_var_eigenvalues.png`](figures/A2_var_eigenvalues.png) and
-[`A4_free_run_divergence.png`](figures/A4_free_run_divergence.png).
+envelope. See [`A2_var_eigenvalues.png`](figures/FD001/A2_var_eigenvalues.png) and
+[`A4_free_run_divergence.png`](figures/FD001/A4_free_run_divergence.png).
 
 ---
 
@@ -135,7 +135,7 @@ of $t$. $\;\blacksquare$
 error; Theorem 2 gives a *horizon-independent* bound $B$. The stability claim
 is precisely this dichotomy: **the manifold rollout cannot blow up, the VAR
 provably can.** Confirmed by the flat manifold free-run trace in
-[`A4_free_run_divergence.png`](figures/A4_free_run_divergence.png).
+[`A4_free_run_divergence.png`](figures/FD001/A4_free_run_divergence.png).
 
 ---
 
@@ -180,9 +180,9 @@ exponential blow-up of Theorem 1.
 **Empirical hook (Exp B).** The robust curvature on FD001 is
 $\kappa = 1.54\times10^{-4}$. The measured constant-velocity RMSE of $h_0$
 stays strictly **under** the $\tfrac{\kappa}{2}t^2$ envelope out to 100 cycles
-([`B2_error_vs_horizon.png`](figures/B2_error_vs_horizon.png)), and beats the
+([`B2_error_vs_horizon.png`](figures/FD001/B2_error_vs_horizon.png)), and beats the
 persistence baseline by skill $+0.66$ to $+0.77$
-([`B3_skill_vs_persistence.png`](figures/B3_skill_vs_persistence.png)).
+([`B3_skill_vs_persistence.png`](figures/FD001/B3_skill_vs_persistence.png)).
 
 ---
 
@@ -233,7 +233,7 @@ $\;\blacksquare$
 
 **Empirical hook (Exp C).** The binned $\mathbb{E}[\text{RUL}\mid h_0]$ curve is
 cleanly monotone decreasing
-([`C3_health_vs_rul.png`](figures/C3_health_vs_rul.png)), and a supervised map
+([`C3_health_vs_rul.png`](figures/FD001/C3_health_vs_rul.png)), and a supervised map
 $\text{RUL} = f(h_0, h_1, \dot h_0, \dot h_1)$ on the official FD001 test set
 achieves **RMSE $= 13.7$, $R^2 = +0.89$** versus a mean-RUL baseline RMSE
 $= 43.1$. The naive forecast-to-threshold estimator fails (RMSE $= 49$) — a

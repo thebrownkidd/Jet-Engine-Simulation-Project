@@ -73,7 +73,7 @@ Predictions track the diagonal with a tight, near-unbiased error distribution
 (slight $+3.2$ cycle bias). The saturation near 125 is the intended
 piecewise-linear RUL ceiling for early-truncated engines.
 
-![Predicted vs true RUL and error histogram](figures/C1_rul_scatter.png)
+![Predicted vs true RUL and error histogram](figures/FD001/C1_rul_scatter.png)
 
 ### 3.2 The learned health → RUL relationship is monotone (Proposition 5)
 
@@ -82,14 +82,14 @@ $\sim\!7$ cycles as $h_0$ rises — the monotone map guaranteed by Proposition 5
 The velocity colouring shows degradation **accelerates** near failure (higher
 $\dot h_0$ at low RUL), which is why adding $\dot h_0$ as a feature helps.
 
-![Health level vs RUL relationship](figures/C3_health_vs_rul.png)
+![Health level vs RUL relationship](figures/FD001/C3_health_vs_rul.png)
 
 ### 3.3 Example test engines
 
 Causal health trajectories with the predicted-vs-true RUL readout, spanning
 best to worst cases:
 
-![Example engines: causal health and RUL readout](figures/C2_examples.png)
+![Example engines: causal health and RUL readout](figures/FD001/C2_examples.png)
 
 ---
 
