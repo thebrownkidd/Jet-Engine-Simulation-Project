@@ -1,0 +1,361 @@
+{
+  "dataset": "FD001",
+  "n_train_rows": 16561,
+  "n_test_rows": 4070,
+  "n_successes": 78,
+  "success_criteria": {
+    "min_r2": 0.2,
+    "min_delta_r2": 0.05
+  },
+  "best_per_sensor": [
+    {
+      "sensor": "s1",
+      "hypothesis": "H0_settings_linear",
+      "r2": 1.0,
+      "mae": 0.0,
+      "delta_r2_vs_settings": 0.0
+    },
+    {
+      "sensor": "s10",
+      "hypothesis": "H6_arrhenius_loglinear",
+      "r2": 1.0,
+      "mae": 0.0,
+      "delta_r2_vs_settings": 1.0
+    },
+    {
+      "sensor": "s11",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.6221568232861063,
+      "mae": 0.13766664182370664,
+      "delta_r2_vs_settings": 0.6228492291608072
+    },
+    {
+      "sensor": "s12",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.586037240307139,
+      "mae": 0.39835808618885576,
+      "delta_r2_vs_settings": 0.5863332356682529
+    },
+    {
+      "sensor": "s13",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.3898437102378377,
+      "mae": 0.047975169242193166,
+      "delta_r2_vs_settings": 0.38952700908362325
+    },
+    {
+      "sensor": "s14",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.18171922836224497,
+      "mae": 11.164614434187119,
+      "delta_r2_vs_settings": 0.183795688000565
+    },
+    {
+      "sensor": "s15",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5414065311870919,
+      "mae": 0.020405376495967274,
+      "delta_r2_vs_settings": 0.541272846515424
+    },
+    {
+      "sensor": "s16",
+      "hypothesis": "H0_settings_linear",
+      "r2": 0.4375,
+      "mae": 1.0408340855860843e-17,
+      "delta_r2_vs_settings": 0.0
+    },
+    {
+      "sensor": "s17",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.48621856310034683,
+      "mae": 0.9045696185445925,
+      "delta_r2_vs_settings": 0.4862757290476958
+    },
+    {
+      "sensor": "s18",
+      "hypothesis": "H0_settings_linear",
+      "r2": 1.0,
+      "mae": 0.0,
+      "delta_r2_vs_settings": 0.0
+    },
+    {
+      "sensor": "s19",
+      "hypothesis": "H0_settings_linear",
+      "r2": 1.0,
+      "mae": 0.0,
+      "delta_r2_vs_settings": 0.0
+    },
+    {
+      "sensor": "s2",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.4633994664374186,
+      "mae": 0.2995049600866842,
+      "delta_r2_vs_settings": 0.4645544945489477
+    },
+    {
+      "sensor": "s20",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5022756516311244,
+      "mae": 0.10497506026671717,
+      "delta_r2_vs_settings": 0.5044046343719863
+    },
+    {
+      "sensor": "s21",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5201245176281737,
+      "mae": 0.062460729831877344,
+      "delta_r2_vs_settings": 0.5213524876661768
+    },
+    {
+      "sensor": "s3",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.4529883943950056,
+      "mae": 3.758824926233873,
+      "delta_r2_vs_settings": 0.45365811401487754
+    },
+    {
+      "sensor": "s4",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5931215095461125,
+      "mae": 4.79487050138407,
+      "delta_r2_vs_settings": 0.5933003507842199
+    },
+    {
+      "sensor": "s5",
+      "hypothesis": "H0_settings_linear",
+      "r2": -1.25,
+      "mae": 5.329070518200751e-15,
+      "delta_r2_vs_settings": 0.0
+    },
+    {
+      "sensor": "s6",
+      "hypothesis": "H3_interaction_settings_degr",
+      "r2": 0.019952146510236135,
+      "mae": 0.00040514206370360423,
+      "delta_r2_vs_settings": 0.020076918324109183
+    },
+    {
+      "sensor": "s7",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5611102564924328,
+      "mae": 0.4982318667883329,
+      "delta_r2_vs_settings": 0.561334637881588
+    },
+    {
+      "sensor": "s8",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.39045494007381,
+      "mae": 0.04721603863374131,
+      "delta_r2_vs_settings": 0.39111075342991275
+    },
+    {
+      "sensor": "s9",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.2870074824006572,
+      "mae": 11.825916486552064,
+      "delta_r2_vs_settings": 0.2885848172071406
+    }
+  ],
+  "top_successes": [
+    {
+      "sensor": "s11",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.6221568232861063,
+      "mae": 0.13766664182370664,
+      "delta_r2_vs_settings": 0.6228492291608072,
+      "description": "Mixed physics-inspired basis (sqrt, reciprocal, exponential degradation terms)."
+    },
+    {
+      "sensor": "s11",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.6220890593021373,
+      "mae": 0.13763608870562663,
+      "delta_r2_vs_settings": 0.6227814651768382,
+      "description": "Sensor output follows monotonic/polynomial degradation trajectory."
+    },
+    {
+      "sensor": "s11",
+      "hypothesis": "H3_interaction_settings_degr",
+      "r2": 0.6100546664181489,
+      "mae": 0.14015032480311326,
+      "delta_r2_vs_settings": 0.6107470722928497,
+      "description": "Operating-condition effects are degradation-dependent (interaction terms)."
+    },
+    {
+      "sensor": "s11",
+      "hypothesis": "H2_settings_plus_degr",
+      "r2": 0.6100361204708384,
+      "mae": 0.14015105988876095,
+      "delta_r2_vs_settings": 0.6107285263455393,
+      "description": "Sensors depend on settings and degradation state additively."
+    },
+    {
+      "sensor": "s11",
+      "hypothesis": "H6_arrhenius_loglinear",
+      "r2": 0.6013604975521817,
+      "mae": 0.14205113037844505,
+      "delta_r2_vs_settings": 0.6020529034268826,
+      "description": "Arrhenius-like exponential dependence linearized in log(sensor)."
+    },
+    {
+      "sensor": "s4",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5931215095461125,
+      "mae": 4.79487050138407,
+      "delta_r2_vs_settings": 0.5933003507842199,
+      "description": "Mixed physics-inspired basis (sqrt, reciprocal, exponential degradation terms)."
+    },
+    {
+      "sensor": "s4",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.5924013290286054,
+      "mae": 4.801002288515245,
+      "delta_r2_vs_settings": 0.5925801702667128,
+      "description": "Sensor output follows monotonic/polynomial degradation trajectory."
+    },
+    {
+      "sensor": "s12",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.586037240307139,
+      "mae": 0.39835808618885576,
+      "delta_r2_vs_settings": 0.5863332356682529,
+      "description": "Sensor output follows monotonic/polynomial degradation trajectory."
+    },
+    {
+      "sensor": "s12",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5859580886760469,
+      "mae": 0.3986024402188023,
+      "delta_r2_vs_settings": 0.5862540840371608,
+      "description": "Mixed physics-inspired basis (sqrt, reciprocal, exponential degradation terms)."
+    },
+    {
+      "sensor": "s4",
+      "hypothesis": "H2_settings_plus_degr",
+      "r2": 0.5835614440462916,
+      "mae": 4.847394813020007,
+      "delta_r2_vs_settings": 0.583740285284399,
+      "description": "Sensors depend on settings and degradation state additively."
+    },
+    {
+      "sensor": "s4",
+      "hypothesis": "H3_interaction_settings_degr",
+      "r2": 0.5832480948210454,
+      "mae": 4.8495034839477125,
+      "delta_r2_vs_settings": 0.5834269360591529,
+      "description": "Operating-condition effects are degradation-dependent (interaction terms)."
+    },
+    {
+      "sensor": "s12",
+      "hypothesis": "H2_settings_plus_degr",
+      "r2": 0.5779356410846086,
+      "mae": 0.40191269656880557,
+      "delta_r2_vs_settings": 0.5782316364457225,
+      "description": "Sensors depend on settings and degradation state additively."
+    },
+    {
+      "sensor": "s12",
+      "hypothesis": "H3_interaction_settings_degr",
+      "r2": 0.5778280039467456,
+      "mae": 0.4019153478168781,
+      "delta_r2_vs_settings": 0.5781239993078595,
+      "description": "Operating-condition effects are degradation-dependent (interaction terms)."
+    },
+    {
+      "sensor": "s4",
+      "hypothesis": "H6_arrhenius_loglinear",
+      "r2": 0.5750752872258873,
+      "mae": 4.914595033202481,
+      "delta_r2_vs_settings": 0.5752541284639947,
+      "description": "Arrhenius-like exponential dependence linearized in log(sensor)."
+    },
+    {
+      "sensor": "s12",
+      "hypothesis": "H6_arrhenius_loglinear",
+      "r2": 0.564289526044959,
+      "mae": 0.40953052213595137,
+      "delta_r2_vs_settings": 0.5645855214060729,
+      "description": "Arrhenius-like exponential dependence linearized in log(sensor)."
+    },
+    {
+      "sensor": "s7",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5611102564924328,
+      "mae": 0.4982318667883329,
+      "delta_r2_vs_settings": 0.561334637881588,
+      "description": "Mixed physics-inspired basis (sqrt, reciprocal, exponential degradation terms)."
+    },
+    {
+      "sensor": "s7",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.5603979124811845,
+      "mae": 0.49826381869561387,
+      "delta_r2_vs_settings": 0.5606222938703397,
+      "description": "Sensor output follows monotonic/polynomial degradation trajectory."
+    },
+    {
+      "sensor": "s7",
+      "hypothesis": "H2_settings_plus_degr",
+      "r2": 0.5510583583426032,
+      "mae": 0.5041146602548457,
+      "delta_r2_vs_settings": 0.5512827397317583,
+      "description": "Sensors depend on settings and degradation state additively."
+    },
+    {
+      "sensor": "s7",
+      "hypothesis": "H3_interaction_settings_degr",
+      "r2": 0.5508028026802061,
+      "mae": 0.5042024218112826,
+      "delta_r2_vs_settings": 0.5510271840693612,
+      "description": "Operating-condition effects are degradation-dependent (interaction terms)."
+    },
+    {
+      "sensor": "s7",
+      "hypothesis": "H6_arrhenius_loglinear",
+      "r2": 0.542585480927305,
+      "mae": 0.5104201775055159,
+      "delta_r2_vs_settings": 0.5428098623164601,
+      "description": "Arrhenius-like exponential dependence linearized in log(sensor)."
+    },
+    {
+      "sensor": "s15",
+      "hypothesis": "H5_nonlinear_basis",
+      "r2": 0.5414065311870919,
+      "mae": 0.020405376495967274,
+      "delta_r2_vs_settings": 0.541272846515424,
+      "description": "Mixed physics-inspired basis (sqrt, reciprocal, exponential degradation terms)."
+    },
+    {
+      "sensor": "s15",
+      "hypothesis": "H1_degradation_poly",
+      "r2": 0.5413954137918566,
+      "mae": 0.020403762305789965,
+      "delta_r2_vs_settings": 0.5412617291201887,
+      "description": "Sensor output follows monotonic/polynomial degradation trajectory."
+    },
+    {
+      "sensor": "s15",
+      "hypothesis": "H3_interaction_settings_degr",
+      "r2": 0.5329304070798199,
+      "mae": 0.020582594917178343,
+      "delta_r2_vs_settings": 0.5327967224081519,
+      "description": "Operating-condition effects are degradation-dependent (interaction terms)."
+    },
+    {
+      "sensor": "s15",
+      "hypothesis": "H2_settings_plus_degr",
+      "r2": 0.5328797362116314,
+      "mae": 0.02058311492446341,
+      "delta_r2_vs_settings": 0.5327460515399635,
+      "description": "Sensors depend on settings and degradation state additively."
+    },
+    {
+      "sensor": "s11",
+      "hypothesis": "H4_reciprocal_remaining",
+      "r2": 0.5221793011335145,
+      "mae": 0.1559021729428256,
+      "delta_r2_vs_settings": 0.5228717070082154,
+      "description": "Near-failure nonlinearity rises as inverse remaining life."
+    }
+  ]
+}

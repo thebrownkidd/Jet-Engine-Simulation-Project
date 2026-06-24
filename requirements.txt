@@ -1,0 +1,26 @@
+# Jet Engine Simulation Project - Dependencies
+# NASA C-MAPSS dataset | LSTM sensor simulator + degradation analysis
+
+# Deep learning
+torch>=2.0.0
+
+# Data science core
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# Machine learning
+scikit-learn>=1.3.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+imageio>=2.31.0
+
+# Optional but used for boosting models in HI_calc.py / Classifier_HI.py
+xgboost>=2.0.0
+lightgbm>=4.0.0
+
+# Jupyter notebooks
+jupyter>=1.0.0
+ipykernel>=6.0.0
