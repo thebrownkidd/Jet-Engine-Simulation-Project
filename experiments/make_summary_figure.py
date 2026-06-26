@@ -5,8 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-df = pd.read_csv(os.path.join(HERE, "artifacts", "cross_dataset_results.csv"))
-out = os.path.join(HERE, os.pardir, "docs", "figures")
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+df = pd.read_csv(os.path.join(ROOT, "results", "tables", "cross_dataset_results.csv"))
+out = os.path.join(ROOT, "results", "figures")
 os.makedirs(out, exist_ok=True)
 
 ds = df["dataset"].tolist()

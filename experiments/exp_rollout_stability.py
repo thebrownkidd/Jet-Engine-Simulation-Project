@@ -23,22 +23,28 @@ sensor trajectory at each future horizon h = 1, 2, ... :
 
 Outputs
 -------
-docs/figures/A1_rollout_r2_vs_horizon.png   <- the money plot
-docs/figures/A2_var_eigenvalues.png         <- rho(A) on the unit circle
-docs/figures/A3_example_trajectories.png    <- true vs both rollouts, 6 sensors
-experiments/artifacts/rollout_stability.csv <- R2(h) for both methods
+results/figures/A1_rollout_r2_vs_horizon.png   <- the money plot
+results/figures/A2_var_eigenvalues.png         <- rho(A) on the unit circle
+results/figures/A3_example_trajectories.png    <- true vs both rollouts, 6 sensors
+results/tables/FD00<fd>/rollout_stability.csv <- R2(h) for both methods
 """
 
 from __future__ import annotations
 
 import os
+import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
-import manifold_core as mc
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC = os.path.join(ROOT, "src")
+if SRC not in sys.path:
+    sys.path.insert(0, SRC)
+
+import manifold as mc
 
 CUTOFF_FRAC = 0.40       # start rolling out at 40% of each engine's life
 VEL_WINDOW = 20          # cycles used to estimate local health velocity at c0

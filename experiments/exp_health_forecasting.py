@@ -29,21 +29,27 @@ Models (fit on a RECENT window of the visible prefix, then extrapolated)
 
 Outputs
 -------
-docs/figures/B1_health_forecasts.png   example engines, models vs truth
-docs/figures/B2_error_vs_horizon.png   RMSE(k) + theoretical k^2 envelope
-docs/figures/B3_skill_vs_persistence.png   skill(k) per model & coordinate
-experiments/artifacts/health_forecasting.csv
+results/figures/B1_health_forecasts.png   example engines, models vs truth
+results/figures/B2_error_vs_horizon.png   RMSE(k) + theoretical k^2 envelope
+results/figures/B3_skill_vs_persistence.png   skill(k) per model & coordinate
+results/tables/FD00<fd>/health_forecasting.csv
 """
 
 from __future__ import annotations
 
 import os
+import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-import manifold_core as mc
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC = os.path.join(ROOT, "src")
+if SRC not in sys.path:
+    sys.path.insert(0, SRC)
+
+import manifold as mc
 
 CUTOFFS = [0.5, 0.65, 0.8]     # forecast-start fractions (pooled)
 VEL_WINDOW = 20                # window for local velocity

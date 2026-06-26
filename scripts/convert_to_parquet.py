@@ -10,8 +10,9 @@ COL_NAMES = (
     + [f's{i}' for i in range(1, 22)]   # s1 … s21
 )
 
-SRC_DIR = 'CMaps'
-OUT_DIR = 'Data'
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC_DIR = os.path.join(ROOT, 'data', 'raw')
+OUT_DIR = os.path.join(ROOT, 'data', 'processed')
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # ── train / test trajectory files ──────────────────────────────────────────

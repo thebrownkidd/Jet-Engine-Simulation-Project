@@ -1,4 +1,4 @@
-# Mathematical Theory of the Physics-Constrained Health Manifold
+﻿# Mathematical Theory of the Physics-Constrained Health Manifold
 
 **Project:** FD001 jet-engine degradation modelling
 **Scope:** formal statements, proofs, and derivations behind the three
@@ -103,8 +103,8 @@ forcing series converges, so $\sup_t\|e_t\|<\infty$. $\;\blacksquare$
 $\rho(A) = 1.0197 > 1$. The free-running rollout therefore diverges: over 400
 steps past the data the standardized state norm grows from $4.2$ to
 $\approx 3.1\times10^{3}$ (a factor $\sim\!800$), tracking the $\rho(A)^t$
-envelope. See [`A2_var_eigenvalues.png`](figures/FD001/A2_var_eigenvalues.png) and
-[`A4_free_run_divergence.png`](figures/FD001/A4_free_run_divergence.png).
+envelope. See [`A2_var_eigenvalues.png`](../results/figures/FD001/A2_var_eigenvalues.png) and
+[`A4_free_run_divergence.png`](../results/figures/FD001/A4_free_run_divergence.png).
 
 ---
 
@@ -135,7 +135,7 @@ of $t$. $\;\blacksquare$
 error; Theorem 2 gives a *horizon-independent* bound $B$. The stability claim
 is precisely this dichotomy: **the manifold rollout cannot blow up, the VAR
 provably can.** Confirmed by the flat manifold free-run trace in
-[`A4_free_run_divergence.png`](figures/FD001/A4_free_run_divergence.png).
+[`A4_free_run_divergence.png`](../results/figures/FD001/A4_free_run_divergence.png).
 
 ---
 
@@ -174,15 +174,15 @@ quadratic Taylor-remainder rate). $\;\blacksquare$
 **Corollary 3.1 (Sensor-space forecast error stays polynomial).**
 Composing with the $L_D$-Lipschitz decoder, the forecast error in physical
 sensor units obeys $\|\hat x_{c+t} - x_{c+t}\| \le L_D\big(\tfrac{\kappa}{2}t^2
-+ \text{(other latent coords)}\big) = O(t^2)$ — polynomial, never the
++ \text{(other latent coords)}\big) = O(t^2)$ â€” polynomial, never the
 exponential blow-up of Theorem 1.
 
 **Empirical hook (Exp B).** The robust curvature on FD001 is
 $\kappa = 1.54\times10^{-4}$. The measured constant-velocity RMSE of $h_0$
 stays strictly **under** the $\tfrac{\kappa}{2}t^2$ envelope out to 100 cycles
-([`B2_error_vs_horizon.png`](figures/FD001/B2_error_vs_horizon.png)), and beats the
+([`B2_error_vs_horizon.png`](../results/figures/FD001/B2_error_vs_horizon.png)), and beats the
 persistence baseline by skill $+0.66$ to $+0.77$
-([`B3_skill_vs_persistence.png`](figures/FD001/B3_skill_vs_persistence.png)).
+([`B3_skill_vs_persistence.png`](../results/figures/FD001/B3_skill_vs_persistence.png)).
 
 ---
 
@@ -233,10 +233,10 @@ $\;\blacksquare$
 
 **Empirical hook (Exp C).** The binned $\mathbb{E}[\text{RUL}\mid h_0]$ curve is
 cleanly monotone decreasing
-([`C3_health_vs_rul.png`](figures/FD001/C3_health_vs_rul.png)), and a supervised map
+([`C3_health_vs_rul.png`](../results/figures/FD001/C3_health_vs_rul.png)), and a supervised map
 $\text{RUL} = f(h_0, h_1, \dot h_0, \dot h_1)$ on the official FD001 test set
 achieves **RMSE $= 13.7$, $R^2 = +0.89$** versus a mean-RUL baseline RMSE
-$= 43.1$. The naive forecast-to-threshold estimator fails (RMSE $= 49$) — a
+$= 43.1$. The naive forecast-to-threshold estimator fails (RMSE $= 49$) â€” a
 direct consequence of the compressed latent scale discussed in
 [`RUL_PREDICTION.md`](RUL_PREDICTION.md).
 
@@ -258,14 +258,15 @@ flowchart TD
 
 | # | Statement | Type | Falsifying experiment | Verdict |
 |---|-----------|------|-----------------------|---------|
-| L1 | 2-D health identifiable | identifiability | PCA $\rho_2$ | $0.901$ ✓ |
-| T1 | VAR error $\sim\rho^t$, $\rho>1$ | instability (neg.) | Exp A free-run | $\rho=1.02$, ×800 ✓ |
-| T2 | manifold rollout bounded | stability (pos.) | Exp A free-run | flat at $4.2$ ✓ |
-| T3 | health error $\le\tfrac\kappa2 t^2$ | forecastability | Exp B envelope | under bound ✓ |
-| T4 | $R^2$ ceiling | SNR limit | per-sensor ceilings | s6 dropped ✓ |
-| P5 | monotone health$\to$RUL | usefulness | Exp C | RMSE 13.7 ✓ |
+| L1 | 2-D health identifiable | identifiability | PCA $\rho_2$ | $0.901$ âœ“ |
+| T1 | VAR error $\sim\rho^t$, $\rho>1$ | instability (neg.) | Exp A free-run | $\rho=1.02$, Ã—800 âœ“ |
+| T2 | manifold rollout bounded | stability (pos.) | Exp A free-run | flat at $4.2$ âœ“ |
+| T3 | health error $\le\tfrac\kappa2 t^2$ | forecastability | Exp B envelope | under bound âœ“ |
+| T4 | $R^2$ ceiling | SNR limit | per-sensor ceilings | s6 dropped âœ“ |
+| P5 | monotone health$\to$RUL | usefulness | Exp C | RMSE 13.7 âœ“ |
 
 The claim **"stable rollout"** is therefore the *boundedness dichotomy* of
-Theorems 1–2, demonstrated decisively by the free-run divergence test, and the
+Theorems 1â€“2, demonstrated decisively by the free-run divergence test, and the
 claim **"forecastable health enables RUL"** is Theorem 3 + Proposition 5,
 demonstrated by Experiment C.
+

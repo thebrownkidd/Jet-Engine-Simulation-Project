@@ -1,6 +1,6 @@
-# Experiment B — Can the Health State Be Forecast?
+﻿# Experiment B â€” Can the Health State Be Forecast?
 
-> **Reviewer's stance.** A monotone curve is trivial to "forecast" — just hold
+> **Reviewer's stance.** A monotone curve is trivial to "forecast" â€” just hold
 > the last value (persistence) and you will look good against a naive $R^2$.
 > So I will not grade on $R^2$ against a segment mean. I will grade on **skill
 > versus persistence**, the only baseline that is honest for a monotone signal.
@@ -8,7 +8,7 @@
 > health state is not meaningfully forecastable.
 
 **Script:** [`../experiments/exp_health_forecasting.py`](../experiments/exp_health_forecasting.py)
-**Artifacts:** `experiments/artifacts/health_forecasting.csv`
+**Artifacts:** `results/tables/FD001/health_forecasting.csv`
 
 ---
 
@@ -60,23 +60,23 @@ forecaster is the most reliable across horizons, while `quadratic_recent`
 over-extrapolates and collapses past $k\approx 75$ (a cautionary tale about
 high-order extrapolation).
 
-![Forecast skill vs persistence for h0 and h1](figures/FD001/B3_skill_vs_persistence.png)
+![Forecast skill vs persistence for h0 and h1](../results/figures/FD001/B3_skill_vs_persistence.png)
 
 ### 3.2 The error is polynomial, not exponential (Theorem 3)
 
 With $\kappa = 1.54\times 10^{-4}$, the measured constant-velocity RMSE of
 $h_0$ stays **strictly below** the $\tfrac{\kappa}{2}k^2$ envelope out to 100
-cycles — confirming the quadratic Taylor-remainder rate and ruling out the
+cycles â€” confirming the quadratic Taylor-remainder rate and ruling out the
 exponential blow-up of sensor-space AR (Theorem 1).
 
-![Forecast error vs horizon with quadratic envelope](figures/FD001/B2_error_vs_horizon.png)
+![Forecast error vs horizon with quadratic envelope](../results/figures/FD001/B2_error_vs_horizon.png)
 
 ### 3.3 Qualitative check
 
 Forecasts launched from 50 % life track the true health trajectories of
 individual engines:
 
-![Example health forecasts](figures/FD001/B1_health_forecasts.png)
+![Example health forecasts](../results/figures/FD001/B1_health_forecasts.png)
 
 ---
 
@@ -85,10 +85,11 @@ individual engines:
 | Claim | Outcome |
 |---|---|
 | Positive skill vs persistence | **Confirmed** at all horizons (best $\sim\!+0.77$ at $k=20$). |
-| Polynomial (not exponential) error | **Confirmed** — under the $\tfrac{\kappa}{2}k^2$ bound. |
+| Polynomial (not exponential) error | **Confirmed** â€” under the $\tfrac{\kappa}{2}k^2$ bound. |
 | Best practical forecaster | `const_velocity` (robust); avoid high-order extrapolation. |
 
 **The health state is genuinely forecastable.** Because $h_0$ is smooth and
 monotone (small $\kappa$), a simple constant-velocity model extrapolates it
-with bounded, polynomially-growing error — which is exactly what makes the
+with bounded, polynomially-growing error â€” which is exactly what makes the
 downstream RUL prediction in [`RUL_PREDICTION.md`](RUL_PREDICTION.md) possible.
+

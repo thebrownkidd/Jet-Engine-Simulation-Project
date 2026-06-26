@@ -1,4 +1,4 @@
-# A Bounded, Monotone Latent-Dynamics Algorithm for RUL Prediction
+﻿# A Bounded, Monotone Latent-Dynamics Algorithm for RUL Prediction
 
 > One-line summary: we learn a 2D latent state from condition-normalized sensor streams, enforce bounded and monotone latent dynamics, prove stability and forecastability properties of the learned dynamics, show NASA C-MAPSS is a suitable dataset for this algorithm, and report cross-dataset results on FD001-FD004.
 
@@ -395,7 +395,7 @@ C-MAPSS is suitable because it provides:
 | FD003 | 1 | 2 | 100 | 100 |
 | FD004 | 6 | 2 | 249 | 248 |
 
-Source: [CMaps/readme.txt](CMaps/readme.txt), Saxena et al. PHM08.
+Source: [data/raw/readme.txt](data/raw/readme.txt), Saxena et al. PHM08.
 
 ### 5.3 Preliminary suitability evidence in this work
 
@@ -463,7 +463,7 @@ naive threshold crossing. The key output is utility, not physical meaning.
 
 ### 6.4 Cross-dataset summary (FD001-FD004)
 
-![Cross-dataset summary](docs/figures/SUMMARY_cross_dataset.png)
+![Cross-dataset summary](results/figures/SUMMARY_cross_dataset.png)
 
 | Metric | FD001 | FD002 | FD003 | FD004 |
 |---|---:|---:|---:|---:|
@@ -604,10 +604,11 @@ cd experiments
 ..\.venv\Scripts\python.exe make_summary_figure.py
 ```
 
-Artifacts are in [experiments/artifacts](experiments/artifacts), figures in [docs/figures](docs/figures).
+Artifacts are in [results/tables](results/tables), figures in [results/figures](results/figures).
 
 ---
 
 ## 10. Conclusion
 
 This work contributes an algorithm for RUL prediction based on learned bounded-monotone latent dynamics, with formal guarantees and cross-dataset validation on NASA C-MAPSS. The key value is not a claim of physical variable discovery; it is a mathematically structured latent representation that yields stable rollout behavior and strong predictive utility across regime and fault complexity.
+

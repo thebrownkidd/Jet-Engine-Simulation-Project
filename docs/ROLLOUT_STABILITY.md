@@ -1,15 +1,14 @@
-# Experiment A — Is the Rollout Actually Stable?
+﻿# Experiment A â€” Is the Rollout Actually Stable?
 
 > **Reviewer's stance.** "Stable rollout" is a strong claim. A 2-D autoencoder
 > latent that *reconstructs* well says nothing about what happens when you
 > **iterate** the dynamics forward. I will try to break the claim by pitting the
-> manifold against the obvious competitor — a linear autoregression in sensor
-> space — and by running both maps far past the data until something diverges.
+> manifold against the obvious competitor â€” a linear autoregression in sensor
+> space â€” and by running both maps far past the data until something diverges.
 
 **Script:** [`../experiments/exp_rollout_stability.py`](../experiments/exp_rollout_stability.py)
-**Artifacts:** `experiments/artifacts/rollout_stability.csv`
+**Artifacts:** `results/tables/FD001/rollout_stability.csv`
 
----
 
 ## 1. Falsifiable hypotheses
 
@@ -19,11 +18,10 @@
 | **H2** | A sensor-space VAR ($z_{t+1}=Az_t+b$) is **not** bounded: $\rho(A)>1$. | If $\rho(A)\le 1$ the VAR is also stable and the manifold has no edge. |
 | **H3** | At realistic, *scored* horizons the manifold tracks the trend about as well as the VAR. | If the manifold is much worse at short horizons, it is not a credible model. |
 
-The honest position up front: **H3 is a tie** on the smooth denoised trend —
+The honest position up front: **H3 is a tie** on the smooth denoised trend â€”
 the manifold's advantage is *provable boundedness* (H1 vs H2), not higher
 short-horizon accuracy.
 
----
 
 ## 2. Method
 
@@ -39,11 +37,10 @@ short-horizon accuracy.
 4. **Free-run divergence test** (the decisive one): iterate *both* maps 400
    steps beyond the data and record the standardized state norm $\|z_t\|$.
 
----
 
 ## 3. Results
 
-### 3.1 The VAR is non-contractive — Theorem 1 bites
+### 3.1 The VAR is non-contractive â€” Theorem 1 bites
 
 The fitted sensor-space VAR has spectral radius
 
@@ -51,15 +48,15 @@ $$\rho(A) = 1.0197 > 1,$$
 
 with eigenvalues sitting **outside** the unit circle.
 
-![VAR eigenvalues on the unit circle](figures/FD001/A2_var_eigenvalues.png)
+![VAR eigenvalues on the unit circle](../results/figures/FD001/A2_var_eigenvalues.png)
 
 By **Theorem 1** this guarantees geometric error growth. The free-run confirms
 it: over 400 extra steps the VAR state norm explodes from $\approx 4.2$ to
 $\approx 3.1\times 10^{3}$ (factor $\sim\!800$), hugging the $\rho(A)^t$
-envelope, while the manifold stays **flat at $\approx 4.2$** — exactly the
+envelope, while the manifold stays **flat at $\approx 4.2$** â€” exactly the
 horizon-independent bound $B$ of **Theorem 2**.
 
-![Free-run divergence: VAR explodes, manifold bounded](figures/FD001/A4_free_run_divergence.png)
+![Free-run divergence: VAR explodes, manifold bounded](../results/figures/FD001/A4_free_run_divergence.png)
 
 This single plot is the proof of the stability claim: one map is provably
 unbounded, the other provably bounded.
@@ -76,28 +73,28 @@ within the scored window, so accuracy is similar:
 | 30 | 0.801 | 0.815 | 0.281 | 0.271 |
 | 50 | 0.501 | 0.577 | 0.460 | 0.424 |
 
-![Rollout accuracy vs horizon](figures/FD001/A1_rollout_r2_vs_horizon.png)
+![Rollout accuracy vs horizon](../results/figures/FD001/A1_rollout_r2_vs_horizon.png)
 
-The VAR is *slightly* better point-for-point — and that is fine. The claim was
+The VAR is *slightly* better point-for-point â€” and that is fine. The claim was
 never "the manifold extrapolates the trend more accurately"; it was "the
 manifold rollout is **stable**". The example trajectories show the mechanism:
 the manifold tracks the degradation trend, while the VAR begins to curl away on
 channels such as `s9`/`s14`.
 
-![Example trajectories: true vs manifold vs VAR](figures/FD001/A3_example_trajectories.png)
+![Example trajectories: true vs manifold vs VAR](../results/figures/FD001/A3_example_trajectories.png)
 
----
 
 ## 4. Verdict
 
 | Hypothesis | Outcome |
 |---|---|
-| **H1** manifold bounded | **Confirmed** — free-run flat at $4.2$ for 400 steps. |
-| **H2** VAR unbounded | **Confirmed** — $\rho(A)=1.02$, free-run ×800 blow-up. |
-| **H3** comparable when scored | **Confirmed** — tie within the scored window. |
+| **H1** manifold bounded | **Confirmed** â€” free-run flat at $4.2$ for 400 steps. |
+| **H2** VAR unbounded | **Confirmed** â€” $\rho(A)=1.02$, free-run Ã—800 blow-up. |
+| **H3** comparable when scored | **Confirmed** â€” tie within the scored window. |
 
 **The stability claim survives the skeptical test, with one honest caveat:** it
 is a statement about *boundedness in the limit*, proven by the free-run
 divergence, not about beating a VAR at short horizons. The manifold cannot
 diverge by construction (logistic latent + Lipschitz decoder, Theorem 2); the
 VAR provably can (Theorem 1).
+

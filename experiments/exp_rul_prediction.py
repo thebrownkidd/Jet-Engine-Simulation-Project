@@ -34,23 +34,29 @@ Two estimators are compared, and we are honest about why the naive one fails.
 
 Outputs
 -------
-  artifacts/rul_predictions.csv      per-engine: unit_id, rul_true, pred_*, ...
-  artifacts/rul_metrics.json         RMSE / MAE / R2 / NASA for every estimator
-  docs/figures/C1_rul_scatter.png    predicted vs true (+ error histogram)
-  docs/figures/C2_examples.png       example engines: causal h0 + RUL readout
-  docs/figures/C3_health_vs_rul.png  learned health->RUL relationship
+    results/tables/FD00<fd>/rul_predictions.csv      per-engine: unit_id, rul_true, pred_*, ...
+    results/tables/FD00<fd>/rul_metrics.json         RMSE / MAE / R2 / NASA for every estimator
+    results/figures/C1_rul_scatter.png               predicted vs true (+ error histogram)
+    results/figures/C2_examples.png                  example engines: causal h0 + RUL readout
+    results/figures/C3_health_vs_rul.png             learned health->RUL relationship
 """
 from __future__ import annotations
 
 import json
 import os
+import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.ensemble import HistGradientBoostingRegressor
 
-import manifold_core as mc
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC = os.path.join(ROOT, "src")
+if SRC not in sys.path:
+    sys.path.insert(0, SRC)
+
+import manifold as mc
 
 # ----------------------------- configuration ------------------------------ #
 VEL_WINDOW = 25      # trailing cycles used to estimate the health velocity

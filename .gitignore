@@ -28,17 +28,18 @@ Thumbs.db
 *.bak
 
 runs_simulator
-Data
+data/raw/
+data/processed/
 
 runs_simulator/*
 fit_plots
 crazy_fit_plots
-CMaps
 figs_simulator
 Test_on_power_dist
 Test_power_distribution
 Data.zip
 *.pt
 data_cache.pt
+results/models/
 .venv
 .github

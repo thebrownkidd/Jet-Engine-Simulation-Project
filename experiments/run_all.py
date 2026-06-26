@@ -8,8 +8,8 @@ Usage:
     python run_all.py 1 3        # only FD001 and FD003
 
 Outputs:
-    experiments/artifacts/cross_dataset_results.csv
-    experiments/artifacts/cross_dataset_results.json
+    results/tables/cross_dataset_results.csv
+    results/tables/cross_dataset_results.json
 """
 from __future__ import annotations
 
@@ -19,7 +19,12 @@ import sys
 
 import pandas as pd
 
-import manifold_core as mc
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC = os.path.join(ROOT, "src")
+if SRC not in sys.path:
+    sys.path.insert(0, SRC)
+
+import manifold as mc
 import exp_discovery
 import exp_rollout_stability as exp_a
 import exp_health_forecasting as exp_b
@@ -44,8 +49,9 @@ def run_one(fd: int) -> dict:
 def main(fds):
     rows = [run_one(fd) for fd in fds]
     df = pd.DataFrame(rows)
-    out_csv = os.path.join(mc.HERE, "artifacts", "cross_dataset_results.csv")
-    out_json = os.path.join(mc.HERE, "artifacts", "cross_dataset_results.json")
+    os.makedirs(mc.TABLE_DIR, exist_ok=True)
+    out_csv = os.path.join(mc.TABLE_DIR, "cross_dataset_results.csv")
+    out_json = os.path.join(mc.TABLE_DIR, "cross_dataset_results.json")
     df.to_csv(out_csv, index=False)
     with open(out_json, "w", encoding="utf-8") as fh:
         json.dump(rows, fh, indent=2)

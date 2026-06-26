@@ -15,20 +15,26 @@ Reported per dataset
   recon_mean_r2           mean test reconstruction R2 over informative sensors
   recon_min_r2            worst informative sensor
 
-Figures (docs/figures/FD00<fd>/)
+Figures (results/figures/FD00<fd>/)
   D1_health_trajectories.png   h0(t) for several engines (monotone wear)
   D2_manifold.png              PCA scree + 2-D health-state scatter
 """
 from __future__ import annotations
 
 import os
+import sys
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 
-import manifold_core as mc
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SRC = os.path.join(ROOT, "src")
+if SRC not in sys.path:
+  sys.path.insert(0, SRC)
+
+import manifold as mc
 
 
 def main(fd: int = 1) -> dict:
