@@ -87,19 +87,20 @@ def rollout_var(var, x0_raw: np.ndarray, steps: int) -> np.ndarray:
 # Manifold rollout
 # --------------------------------------------------------------------------- #
 def rollout_manifold(man, h_hist: np.ndarray, steps: int) -> np.ndarray:
-    """Extrapolate 2-D health with local velocity from the last VEL_WINDOW
-    points, then decode. h_hist: (T0, 2) health up to and including c0."""
+    """Extrapolate the k-D health with local velocity from the last VEL_WINDOW
+    points, then decode. h_hist: (T0, k) health up to and including c0."""
+    k = getattr(man, "k", mc.K)
     w = min(VEL_WINDOW, len(h_hist) - 1)
     if w < 1:
-        v = np.zeros(mc.K)
+        v = np.zeros(k)
     else:
         recent = h_hist[-w - 1:]
         t = np.arange(len(recent))
-        v = np.array([np.polyfit(t, recent[:, j], 1)[0] for j in range(mc.K)])
+        v = np.array([np.polyfit(t, recent[:, j], 1)[0] for j in range(k)])
     h0 = h_hist[-1]
     future_h = np.array([h0 + v * (s + 1) for s in range(steps)])
     future_h[:, 0] = np.clip(future_h[:, 0], 0.0, 1.5)   # health may exceed 1
-    return man.decode(future_h)         # (steps, 15) raw units
+    return man.decode(future_h)         # (steps, n_dynamic) raw units
 
 
 def free_run(var, man, g, c0, steps):

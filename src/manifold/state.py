@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import numpy as np
 from sklearn.cluster import KMeans
 
-from .config import TABLE_DIR
+from .config import K, LAMBDA_MONO, LAMBDA_SMOOTH, TABLE_DIR
 
 
 @dataclass
@@ -24,6 +24,14 @@ class Config:
     model_dir: str
     table_dir: str
     fig_dir: str
+    # --- experiment knobs (defaults reproduce the validated pipeline) ------ #
+    k: int = K
+    lambda_mono: float = LAMBDA_MONO
+    lambda_smooth: float = LAMBDA_SMOOTH
+    normalize: bool = True            # False -> global standardisation (no regimes)
+    global_mean: Optional[np.ndarray] = None
+    regime_rule: str = "heuristic"    # 'heuristic' | 'silhouette'
+    tag: str = ""                     # cache namespace for experiment variants
 
 
 CFG: Config | None = None

@@ -5,15 +5,33 @@ import os
 import numpy as np
 from sklearn.cluster import KMeans
 
-from .config import ALL_SENSORS, FIG_BASE, MODEL_DIR, SEED, SETTINGS, TABLE_DIR
+from .config import ALL_SENSORS, FIG_BASE, K, LAMBDA_MONO, LAMBDA_SMOOTH, MODEL_DIR, SEED, SETTINGS, TABLE_DIR
 from .data import _read, load_split
 from .denoise import denoise
+from .regimes import select_n_regimes
 from .selection import choose_sensor_sets, sensor_trends
 from .state import Config, require_cfg, set_cfg
 from .train import get_manifold
 
 
-def configure(fd: int, retrain: bool = False) -> None:
+def configure(fd: int, retrain: bool = False, *, k: int | None = None,
+              lambda_mono: float | None = None, lambda_smooth: float | None = None,
+              normalize: bool = True, regime_rule: str = "heuristic",
+              tag: str = "") -> None:
+    """Select dataset FD00<fd> and prepare the pipeline.
+
+    Experiment knobs (all default to the validated production pipeline):
+        k             latent bottleneck dimension (default 2)
+        lambda_mono   monotonicity penalty weight (default 5.0)
+        lambda_smooth smoothness penalty weight (default 2.0)
+        normalize     True -> per-regime normalisation; False -> global std
+        regime_rule   'heuristic' (min(6, #rounded-settings)) | 'silhouette'
+        tag           cache namespace so variants don't overwrite each other
+    """
+    k = K if k is None else k
+    lambda_mono = LAMBDA_MONO if lambda_mono is None else lambda_mono
+    lambda_smooth = LAMBDA_SMOOTH if lambda_smooth is None else lambda_smooth
+
     model_dir = os.path.join(MODEL_DIR, f"FD00{fd}")
     table_dir = os.path.join(TABLE_DIR, f"FD00{fd}")
     fig_d = os.path.join(FIG_BASE, f"FD00{fd}")
@@ -22,9 +40,13 @@ def configure(fd: int, retrain: bool = False) -> None:
     os.makedirs(fig_d, exist_ok=True)
 
     tr = _read("train", fd)
-    nreg = min(6, tr[SETTINGS].round(0).drop_duplicates().shape[0])
-    km = KMeans(n_clusters=nreg, n_init=10, random_state=SEED).fit(tr[SETTINGS].to_numpy())
-    reg = km.predict(tr[SETTINGS].to_numpy())
+    settings = tr[SETTINGS].to_numpy()
+    if regime_rule == "silhouette":
+        nreg = select_n_regimes(settings)
+    else:
+        nreg = min(6, tr[SETTINGS].round(0).drop_duplicates().shape[0])
+    km = KMeans(n_clusters=nreg, n_init=10, random_state=SEED).fit(settings)
+    reg = km.predict(settings)
 
     x = tr[ALL_SENSORS].to_numpy().astype(float)
     reg_mean = np.zeros((nreg, len(ALL_SENSORS)))
@@ -34,6 +56,7 @@ def configure(fd: int, retrain: bool = False) -> None:
     resid = x - reg_mean[reg]
     resid_std = np.maximum(resid.std(0), 1e-9)
     global_std = x.std(0)
+    global_mean = x.mean(0)
 
     cfg = Config(
         fd=fd,
@@ -49,6 +72,13 @@ def configure(fd: int, retrain: bool = False) -> None:
         model_dir=model_dir,
         table_dir=table_dir,
         fig_dir=fig_d,
+        k=k,
+        lambda_mono=lambda_mono,
+        lambda_smooth=lambda_smooth,
+        normalize=normalize,
+        global_mean=global_mean,
+        regime_rule=regime_rule,
+        tag=tag,
     )
     set_cfg(cfg)
 

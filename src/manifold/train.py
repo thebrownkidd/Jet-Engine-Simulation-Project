@@ -22,7 +22,7 @@ def _train(train_den) -> Manifold:
     w = torch.tensor((cfg.weights / cfg.weights.sum() * len(cfg.weights)).astype(np.float32))
     mask = torch.tensor(same_engine_mask(train_den))
 
-    model = HealthAE(len(dyn), K)
+    model = HealthAE(len(dyn), cfg.k)
     opt = torch.optim.Adam(model.parameters(), lr=LR)
     for _ in range(EPOCHS):
         opt.zero_grad()
@@ -32,7 +32,7 @@ def _train(train_den) -> Manifold:
         dh = h0[1:] - h0[:-1]
         mono = torch.relu(-dh)[mask].mean()
         smooth = (dh[mask] ** 2).mean()
-        loss = rec + LAMBDA_MONO * mono + LAMBDA_SMOOTH * smooth
+        loss = rec + cfg.lambda_mono * mono + cfg.lambda_smooth * smooth
         loss.backward()
         opt.step()
     model.eval()
@@ -41,18 +41,19 @@ def _train(train_den) -> Manifold:
         h0 = model.encode(xt).numpy()[:, 0]
     corr = np.corrcoef(h0, train_den["cycle"].to_numpy())[0, 1]
     flip0 = bool(corr < 0)
-    return Manifold(model=model, mu=mu, sd=sd, flip0=flip0, dynamic=list(dyn))
+    return Manifold(model=model, mu=mu, sd=sd, flip0=flip0, dynamic=list(dyn), k=cfg.k)
 
 
 def get_manifold(retrain: bool = False) -> Manifold:
     cfg = require_cfg()
     os.makedirs(cfg.model_dir, exist_ok=True)
-    sd_path = os.path.join(cfg.model_dir, "manifold_k2.pt")
-    st_path = os.path.join(cfg.model_dir, "norm_stats.npz")
+    suffix = f"_{cfg.tag}" if cfg.tag else ""
+    sd_path = os.path.join(cfg.model_dir, f"manifold_k{cfg.k}{suffix}.pt")
+    st_path = os.path.join(cfg.model_dir, f"norm_stats_k{cfg.k}{suffix}.npz")
 
     if (not retrain) and os.path.exists(sd_path) and os.path.exists(st_path):
         stats = np.load(st_path, allow_pickle=True)
-        model = HealthAE(len(cfg.dynamic), K)
+        model = HealthAE(len(cfg.dynamic), cfg.k)
         model.load_state_dict(torch.load(sd_path))
         model.eval()
         return Manifold(
@@ -61,6 +62,7 @@ def get_manifold(retrain: bool = False) -> Manifold:
             sd=stats["sd"],
             flip0=bool(stats["flip0"]),
             dynamic=list(cfg.dynamic),
+            k=cfg.k,
         )
 
     df = load_split("train")

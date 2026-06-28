@@ -44,6 +44,7 @@ class Manifold:
     sd: np.ndarray
     flip0: bool
     dynamic: List[str] = field(default_factory=list)
+    k: int = K
 
     def encode(self, df_denoised: pd.DataFrame) -> np.ndarray:
         x = ((df_denoised[self.dynamic].to_numpy() - self.mu) / self.sd).astype(np.float32)
@@ -55,7 +56,7 @@ class Manifold:
         return h
 
     def decode(self, h_oriented: np.ndarray) -> np.ndarray:
-        h = np.asarray(h_oriented, dtype=np.float32).reshape(-1, K)
+        h = np.asarray(h_oriented, dtype=np.float32).reshape(-1, self.k)
         if self.flip0:
             h = h.copy()
             h[:, 0] = 1.0 - h[:, 0]
