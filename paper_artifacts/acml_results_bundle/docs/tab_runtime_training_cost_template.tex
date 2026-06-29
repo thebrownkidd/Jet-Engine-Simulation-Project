@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{Runtime and training-cost comparison template. Replace TBD values from measured runs.}
+\label{tab:runtime_training_cost}
+\begin{tabular}{lrrrrl}
+\toprule
+Model & Train time (min) & Epochs & Params (M) & Inference (ms/engine) & Note \\
+\midrule
+Manifold AE & TBD & 1500 & TBD & TBD & bounded latent dynamics \\
+LSTM & TBD & 1500 & TBD & TBD & sensor-space neural baseline \\
+GRU & TBD & 1500 & TBD & TBD & sensor-space neural baseline \\
+TCN & TBD & 1500 & TBD & TBD & sensor-space neural baseline \\
+VAR(1) & \textasciitilde 0 & fit once & -- & low & linear closed-form \\
+VAR(2) & \textasciitilde 0 & fit once & -- & low & linear closed-form \\
+\bottomrule
+\end{tabular}
+\end{table}

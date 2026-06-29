@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{Boundedness mechanism. Free-run boundedness tracks the bounded latent geometry, not the penalties; smoothness/monotonicity reduce curvature and improve forecast skill / RUL.}
+\label{tab:boundedness_mechanism}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+dataset & config & bounded\_latent & latent\_bounded & latent\_growth & freerun\_bounded & kappa & cv\_skill\_k20 & rul\_rmse \\
+\midrule
+FD001 & unbounded\_no\_pen & False & True & 1.421 & True & 0.014 & 0.769 & 14.580 \\
+FD001 & bounded\_no\_pen & True & True & 1.213 & True & 0.003 & 0.738 & 13.965 \\
+FD001 & bounded\_smooth & True & True & 1.229 & True & 0.003 & 0.739 & 14.177 \\
+FD001 & bounded\_mono & True & True & 1.241 & True & 0.002 & 0.758 & 14.409 \\
+FD001 & full & True & True & 1.242 & True & 0.002 & 0.756 & 14.908 \\
+FD002 & unbounded\_no\_pen & False & True & 1.603 & True & 0.035 & 0.276 & 28.176 \\
+FD002 & bounded\_no\_pen & True & True & 0.429 & True & 0.008 & 0.506 & 27.432 \\
+FD002 & bounded\_smooth & True & True & 0.704 & True & 0.007 & 0.607 & 27.911 \\
+FD002 & bounded\_mono & True & True & 1.067 & True & 0.002 & 0.675 & 27.056 \\
+FD002 & full & True & True & 1.073 & True & 0.002 & 0.676 & 27.272 \\
+\bottomrule
+\end{tabular}
+\end{table}

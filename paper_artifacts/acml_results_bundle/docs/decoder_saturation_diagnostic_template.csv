@@ -1,0 +1,5 @@
+dataset,variant,max_latent_norm,decoder_output_norm,decoder_activation_saturation_frac,note
+FD001,unbounded_ae,TBD,TBD,TBD,Compute from decoder layer activations during rollout
+FD002,unbounded_ae,TBD,TBD,TBD,Compute from decoder layer activations during rollout
+FD001,full,TBD,TBD,TBD,Reference bounded model
+FD002,full,TBD,TBD,TBD,Reference bounded model

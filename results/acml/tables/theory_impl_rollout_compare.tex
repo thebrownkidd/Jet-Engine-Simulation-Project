@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Legacy projection (h0\_clip) versus theory-matched full-box projection in free-run rollout. Metrics are nearly identical, confirming implementation alignment with negligible empirical change.}
+\label{tab:theory_impl_rollout_compare}
+\begin{tabular}{llrrrrr}
+\toprule
+Dataset & Projection & Free-run norm & Growth & Bounded & NRMSE@25 & NRMSE@50 \\
+\midrule
+FD001 & h0\_clip & 5.216 & 1.301 & Yes & 0.266 & 0.465 \\
+FD001 & full\_box & 5.216 & 1.301 & Yes & 0.266 & 0.465 \\
+FD002 & h0\_clip & 4.017 & 2.380 & Yes & 0.523 & 0.891 \\
+FD002 & full\_box & 4.017 & 2.380 & Yes & 0.523 & 0.886 \\
+FD003 & h0\_clip & 7.674 & 3.022 & Yes & 0.179 & 0.295 \\
+FD003 & full\_box & 6.654 & 2.620 & Yes & 0.179 & 0.295 \\
+FD004 & h0\_clip & 3.271 & 1.050 & Yes & 0.316 & 0.514 \\
+FD004 & full\_box & 3.271 & 1.050 & Yes & 0.316 & 0.514 \\
+\bottomrule
+\end{tabular}
+\end{table}

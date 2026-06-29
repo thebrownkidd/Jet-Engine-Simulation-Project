@@ -1,0 +1,7 @@
+model,train_time_minutes,epochs,parameters_million,inference_ms_per_engine,note
+manifold_ae,TBD,1500,TBD,TBD,Populate from run logs and model summaries
+lstm,TBD,1500,TBD,TBD,Populate from baseline training logs
+gru,TBD,1500,TBD,TBD,Populate from baseline training logs
+tcn,TBD,1500,TBD,TBD,Populate from baseline training logs
+var1,~0,fit_once,TBD,low,Linear closed-form fit
+var2,~0,fit_once,TBD,low,Linear closed-form fit

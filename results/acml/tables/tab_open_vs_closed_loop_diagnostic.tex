@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\caption{Diagnostic clarification of rollout regimes. Sensor-space closed-loop baselines can diverge strongly, while latent constant-velocity open-loop rollouts remain finite over evaluated horizons.}
+\label{tab:open_vs_closed_loop}
+\begin{tabular}{lllccl}
+\toprule
+Model class & Rollout type & State space & Growth range & Bounded & Source \\
+\midrule
+VAR(1) & Closed-loop & Sensor & 25.03x to 759.95x & No & baselines\_extended \\
+VAR(2) & Closed-loop & Sensor & 26.97x to 747.93x & No & baselines\_extended \\
+TCN & Closed-loop & Sensor & 1.35x to 1.27e6x & Mixed & baselines\_extended \\
+AE (unbounded, no penalties) & Open-loop CV & Latent & 1.25x to 1.82x & Yes & boundedness\_mechanism \\
+AE (bounded, full) & Open-loop CV & Latent & 1.30x to 2.38x & Yes & boundedness\_mechanism \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,1 @@
+No external public degradation dataset is available in this workspace and the environment cannot fetch one. Provide --data <path to long-format parquet/csv with unit_id, cycle, sensor columns> to run this experiment.

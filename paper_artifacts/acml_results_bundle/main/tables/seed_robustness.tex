@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{Seed robustness (means over seeds 0-4). The bounded model's stability and skill persist across initialisations.}
+\label{tab:seed_robustness}
+\begin{tabular}{lrrrrrr}
+\toprule
+dataset & variant & recon\_mean & growth\_mean & bounded\_frac & skill\_mean & rul\_rmse\_mean \\
+\midrule
+FD001 & full & 0.964 & 1.081 & 1.000 & 0.767 & 14.394 \\
+FD001 & no\_smooth & 0.969 & 1.089 & 1.000 & 0.766 & 14.431 \\
+FD001 & unbounded\_ae & 0.969 & 1.320 & 1.000 & 0.729 & 14.570 \\
+FD002 & full & 0.908 & 2.558 & 1.000 & 0.523 & 27.404 \\
+FD002 & no\_smooth & 0.908 & 2.529 & 1.000 & 0.527 & 27.439 \\
+FD002 & unbounded\_ae & 0.915 & 3.010 & 1.000 & -0.726 & 27.974 \\
+\bottomrule
+\end{tabular}
+\end{table}
