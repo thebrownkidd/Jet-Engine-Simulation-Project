@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{air_quality latent-dimension sweep: reconstruction and forecast skill vs stability.}
+\label{tab:air_quality_ksweep}
+\begin{tabular}{lrrrrr}
+\toprule
+k & recon\_mean\_r2 & recon\_min\_r2 & freerun\_growth & freerun\_bounded & skill\_hmax \\
+\midrule
+1 & 0.631 & 0.009 & 3.133 & True & -1.176 \\
+2 & 0.806 & 0.730 & 9.518 & False & -2.689 \\
+3 & 0.881 & 0.766 & 4.651 & True & -3.455 \\
+4 & 0.904 & 0.805 & 3.652 & True & -4.197 \\
+5 & 0.901 & 0.830 & 6.641 & False & -3.759 \\
+6 & 0.901 & 0.797 & 4.846 & True & -3.197 \\
+\bottomrule
+\end{tabular}
+\end{table}

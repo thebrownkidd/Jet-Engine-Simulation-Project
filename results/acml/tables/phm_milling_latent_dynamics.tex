@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{phm_milling: context-conditioned bounded latent dynamics vs baselines. Forecast skill vs persistence (mean over seeds), closed-loop free-run growth, boundedness and latent box-saturation.}
+\label{tab:phm_milling_latentdyn}
+\begin{tabular}{lrrrrrrrrrrrrr}
+\toprule
+model & skill\_h1 & skill\_h8 & skill\_h24 & skill\_h48 & skill\_h24\_std & nrmse\_h1 & nrmse\_h48 & freerun\_growth & bounded & lat\_max\_norm & sat\_frac & n\_params & train\_s \\
+\midrule
+persistence & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.064 & 0.817 & 1.000 & True & nan & nan & 0 & 0.000 \\
+cv & -79.754 & -0.863 & -0.525 & 0.089 & 0.000 & 0.572 & 0.780 & 1.253 & True & 0.514 & 0.000 & 0 & 0.000 \\
+ar1 & -77.145 & -0.656 & -1.416 & -1.464 & 0.000 & 0.563 & 1.283 & 1.473 & True & 0.470 & 0.152 & 0 & 0.000 \\
+var\_sensor & -5.025 & -2.170 & -4.214 & -4.067 & 0.000 & 0.156 & 1.840 & 1.813 & True & nan & nan & 0 & 0.000 \\
+mlp\_noctx & -78.278 & -0.596 & -0.015 & 0.509 & 0.054 & 0.567 & 0.572 & 1.608 & True & 0.689 & 0.000 & 4482 & 8.530 \\
+mlp\_ctx & -78.278 & -0.596 & -0.015 & 0.509 & 0.054 & 0.567 & 0.572 & 1.608 & True & 0.689 & 0.000 & 4482 & 7.750 \\
+mlp\_ctx\_noproj & -78.345 & -0.600 & -0.025 & 0.496 & 0.052 & 0.567 & 0.580 & 1.289 & True & 0.649 & 0.000 & 4482 & 7.810 \\
+mlp\_ctx\_onestep & -78.218 & -0.557 & 0.036 & 0.503 & 0.026 & 0.567 & 0.576 & 2.419 & True & 0.757 & 0.000 & 4482 & 0.950 \\
+sensor\_mlp\_ctx & -0.780 & -0.061 & -0.378 & -0.097 & 0.282 & 0.085 & 0.844 & 2.185 & True & nan & nan & 8739 & 12.930 \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{battery latent-dimension sweep: reconstruction rises with K while stability/prognosis need not.}
+\label{tab:battery_ksweep}
+\begin{tabular}{lrrrrrrr}
+\toprule
+k & recon\_mean\_r2 & recon\_min\_r2 & freerun\_growth & freerun\_bounded & kappa & rul\_rmse & rul\_r2 \\
+\midrule
+1 & -0.495 & -3.129 & 1.021 & True & 0.001 & 43.386 & -0.074 \\
+2 & -0.272 & -2.236 & 0.994 & True & 0.001 & 46.981 & -0.260 \\
+3 & 0.238 & -2.572 & 1.394 & True & 0.001 & 46.973 & -0.260 \\
+4 & 0.796 & 0.681 & 2.070 & True & 0.001 & 54.257 & -0.680 \\
+5 & 0.669 & -0.130 & 1.444 & True & 0.001 & 36.330 & 0.247 \\
+6 & 0.726 & 0.123 & 2.833 & True & 0.001 & 46.880 & -0.255 \\
+\bottomrule
+\end{tabular}
+\end{table}

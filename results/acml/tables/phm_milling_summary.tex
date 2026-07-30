@@ -1,0 +1,14 @@
+\begin{table}[t]
+\centering
+\caption{phm_milling external validation: bounded latent manifold vs unbounded AE vs sensor-space VAR.}
+\label{tab:phm_milling}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+model & rho & recon\_mean\_r2 & recon\_min\_r2 & freerun\_growth & bounded & kappa & mono\_viol & rul\_rmse & rul\_r2 & base\_rmse \\
+\midrule
+manifold\_bounded & nan & 0.825 & 0.135 & 3.478 & True & 0.001 & 0.178 & 16.192 & 0.821 & 38.297 \\
+ae\_unbounded & nan & 0.807 & 0.229 & 2.920 & True & 0.003 & 0.276 & nan & nan & nan \\
+var\_sensor & 1.032 & nan & nan & 796.707 & False & nan & nan & nan & nan & nan \\
+\bottomrule
+\end{tabular}
+\end{table}

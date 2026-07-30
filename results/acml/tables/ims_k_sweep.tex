@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{IMS bearing latent-dimension sweep: reconstruction rises with K while stability/prognosis need not.}
+\label{tab:ims_ksweep}
+\begin{tabular}{lrrrrrrr}
+\toprule
+k & recon\_mean\_r2 & recon\_min\_r2 & freerun\_growth & freerun\_bounded & kappa & rul\_rmse & rul\_r2 \\
+\midrule
+1 & 0.393 & -0.494 & 1.002 & True & 0.001 & 35.998 & -1.491 \\
+2 & -0.663 & -4.684 & 2.030 & True & 0.002 & 34.546 & -1.294 \\
+3 & 0.825 & 0.450 & 1.618 & True & 0.002 & 19.374 & 0.279 \\
+4 & 0.833 & 0.671 & 1.492 & True & 0.001 & 20.296 & 0.208 \\
+5 & 0.792 & 0.561 & 1.488 & True & 0.001 & 26.381 & -0.338 \\
+6 & 0.815 & 0.616 & 1.565 & True & 0.001 & 20.301 & 0.208 \\
+\bottomrule
+\end{tabular}
+\end{table}

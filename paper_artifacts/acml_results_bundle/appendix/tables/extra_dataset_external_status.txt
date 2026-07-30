@@ -1,0 +1,192 @@
+TASK 8 — EXTERNAL DATASET: NOW RUN (previously blocked).
+
+An independent run-to-failure dataset (NASA/IMS bearing vibration) was added
+under data/raw_bearing and the pipeline's core claims were re-tested on it.
+
+Pipeline
+  1. experiments/acml/ims_prep.py        raw 20 kHz vibration snapshots -> long
+                                         feature table (per-channel time/freq
+                                         features) at
+                                         data/processed/ims_bearing_features.csv
+  2. experiments/acml/exp_ims_bearing.py bounded k-latent AE vs unbounded AE vs
+                                         sensor-space VAR; K-sweep; RUL utility.
+
+Artifacts
+  results/acml/tables/ims_bearing_summary.csv (+ .tex)
+  results/acml/tables/ims_k_sweep.csv (+ .tex)
+  results/acml/figures/ims_bearing_summary.png
+
+Headline outcome (16 bearing-channel units, 10 train / 6 test)
+  - STABILITY CLAIM REPRODUCES: sensor-space VAR is unstable (rho=1.016>1) and
+    diverges in free run (growth ~181x, unbounded), while the bounded latent
+    rollout stays bounded (growth ~1.5-2x) -- the central algorithmic result
+    holds on an independent dataset.
+  - RECONSTRUCTION / K-AS-REGULARIZER REPRODUCES for k>=3 (recon R2 ~0.82-0.83);
+    k=2 is an unstable operating point on this feature space (recon collapses),
+    so bearings need slightly higher latent capacity than turbofan.
+  - RUL UTILITY REPRODUCES for k>=3 (RMSE 19.4 < mean-baseline 22.8, R2 ~0.28);
+    at k=2 it does not beat the baseline.
+  - MONOTONICITY DOES NOT TRANSFER: bearing degradation is abrupt (healthy
+    plateau then sudden spike), giving ~50% monotone-violation. The monotone-
+    health assumption is turbofan-specific; boundedness/stability is not.
+
+Interpretation for the paper: the bounded-latent stability guarantee generalizes
+across degradation domains; the monotone-progression modelling choice is
+domain-dependent and should be presented as such rather than as universal.
+
+------------------------------------------------------------------------------
+SECOND EXTERNAL DATASET: NASA Li-ion battery aging (data/raw_battery)
+------------------------------------------------------------------------------
+
+Pipeline
+  1. experiments/acml/battery_prep.py    per-discharge-cycle features
+                                         (capacity fade + V/I/T curve summaries)
+                                         -> data/processed/battery_features.csv
+  2. experiments/acml/exp_ims_bearing.py --features .../battery_features.csv
+                                         --name battery  (generic runner)
+
+Artifacts
+  results/acml/tables/battery_summary.csv (+ .tex)
+  results/acml/tables/battery_k_sweep.csv (+ .tex)
+  results/acml/figures/battery_summary.png
+
+Headline outcome (26 batteries, 17 train / 9 test)
+  - STABILITY DIFFERENTIATOR DOES NOT APPLY HERE: the per-discharge-cycle
+    feature dynamics are intrinsically slow/stable, so the sensor-space VAR is
+    ALREADY bounded (rho=1.003, growth ~1.3x). There is no divergence to
+    prevent, so the bounded-vs-diverging contrast that held on turbofan
+    (rho>1, 25-760x) and IMS bearings (VAR 181x) collapses. This delimits the
+    scope of the stability claim: it matters only when the raw/sensor rollout
+    is actually unstable (rho>1).
+  - RECONSTRUCTION reproduces only at higher capacity (k>=4, recon R2 ~0.80);
+    k<=2 collapses. Battery groups span multiple temperatures (4/24/43 C) and
+    load protocols (CC / square-wave / mixed) with no regime normalization, so
+    a random unit split induces cross-group domain shift that a 2-D latent
+    cannot absorb.
+  - RUL is weak: best RMSE ~36 (k=5) barely beats the mean baseline ~45; at
+    k=2 it does not beat the baseline. Heterogeneous per-group lifetimes
+    (40 to 197 cycles) make pooled RUL hard without group conditioning.
+  - MONOTONICITY: ~51% violation at k=2, but this reflects the degenerate k=2
+    latent under domain shift (negative recon), not the underlying capacity
+    signal, which is monotone per battery.
+
+Cross-dataset conclusion for the paper
+  The three domains form a clean scope statement:
+    * turbofan (C-MAPSS): sensor VAR unstable (rho>1) -> bounded latent wins.
+    * bearings (IMS):      feature VAR unstable (rho>1) -> bounded latent wins,
+                           but monotonicity fails (abrupt failure).
+    * batteries (NASA):    feature VAR already stable (rho~1) -> no stability
+                           gap; heterogeneity/regime shift dominates instead.
+  The bounded-latent stability guarantee is real but conditional on rho>1 in the
+  competing sensor-space rollout; it is not a universal improvement.
+
+------------------------------------------------------------------------------
+THIRD EXTERNAL DATASET: PHM 2010 CNC milling tool wear (data/raw_PHM)
+------------------------------------------------------------------------------
+
+Pipeline
+  1. experiments/acml/phm_prep.py         per-cut time-domain features from 7
+                                          channels (force x/y/z, vibration x/y/z,
+                                          acoustic emission) over 315 cuts per
+                                          cutter -> data/processed/phm_features.csv
+  2. experiments/acml/exp_ims_bearing.py  --features .../phm_features.csv
+                                          --name phm_milling  (generic runner)
+
+Artifacts
+  results/acml/tables/phm_milling_summary.csv (+ .tex)
+  results/acml/tables/phm_milling_k_sweep.csv (+ .tex)
+  results/acml/figures/phm_milling_summary.png
+
+Headline outcome (6 cutters c1-c6, 4 train / 2 test) -- STRONGEST reproduction
+  - ALL FIVE CLAIMS REPRODUCE AT k=2 (this is the closest analog to turbofan:
+    gradual monotone wear driven by unstable force/vibration dynamics):
+      C1 recon R2 = 0.825 (k=2), rising to 0.85 with K.
+      C2 sensor VAR unstable (rho=1.032) and diverges (growth ~797x, unbounded)
+         while bounded latent stays bounded (growth ~3.5x). Decisive contrast.
+      C3 monotone-violation only 0.178 -- the learned health h0 rises with cut
+         index, tracking tool wear.
+      C4 reconstruction rises with K (0.50 -> 0.85) while free-run stays bounded.
+      C5 RUL RMSE 16.2 vs mean-baseline 38.3 (R2=0.82); best 11.1 at k=4.
+
+------------------------------------------------------------------------------
+FINAL CROSS-DOMAIN SCOPE (four datasets)
+------------------------------------------------------------------------------
+  * turbofan (C-MAPSS):  VAR rho>1 -> bounded latent wins; monotone; RUL strong.
+  * PHM milling:         VAR rho>1 (797x) -> bounded latent wins; monotone wear;
+                         RUL ~2.4x better than baseline. FULL reproduction.
+  * IMS bearings:        VAR rho>1 (181x) -> bounded latent wins; recon/RUL need
+                         k>=3; monotonicity fails (abrupt failure).
+  * NASA battery:        VAR rho~1 (stable) -> no stability gap to exploit;
+                         cross-group heterogeneity dominates.
+  Takeaway: the bounded-latent stability guarantee reproduces whenever the
+  competing sensor-space rollout is unstable (rho>1), and is accompanied by
+  monotone health + strong RUL when degradation is gradual (turbofan, milling).
+  It offers no advantage when sensor dynamics are already stable (battery), and
+  the monotone-health assumption is domain-dependent (fails for abrupt bearing
+  failure).
+
+------------------------------------------------------------------------------
+FOURTH EXTERNAL DATASET: Beijing multi-site air quality (forecasting; NO RUL)
+------------------------------------------------------------------------------
+Objective differs: this is a stationary multivariate forecasting problem (12
+stations, hourly, 11 variables), not run-to-failure. We test ONLY the core
+contributions that apply -- reconstruction, stable rollout, forecastability --
+and drop RUL and monotone-health (the AE is trained with lambda_mono=0).
+
+Pipeline
+  1. experiments/acml/air_quality_prep.py   12 stations -> long table (stride=3h)
+                                            data/processed/air_quality_features.csv
+  2. experiments/acml/exp_air_quality.py    bounded/unbounded AE, sensor VAR,
+                                            forecast skill vs persistence, K-sweep.
+
+Artifacts
+  results/acml/tables/air_quality_summary.csv (+ .tex)
+  results/acml/tables/air_quality_k_sweep.csv (+ .tex)
+  results/acml/figures/air_quality_summary.png
+
+Headline outcome (12 stations, 8 train / 4 test) -- SCOPE-LIMITING (honest)
+  - RECONSTRUCTION reproduces: bounded k=2 recon R2 = 0.806, rising to 0.90 at
+    k>=4. A compact latent still captures the multivariate state.
+  - STABILITY CONTRAST REVERSES: because the series are stationary/mean-
+    reverting, the sensor-space VAR is contractive (rho=0.996<1, free-run norm
+    decays to ~0.01) -- there is NO divergence to prevent. Meanwhile the
+    constant-velocity latent rollout drifts to a latent-box corner and the
+    decoded standardized norm grows ~9.5x. The latent itself is bounded by
+    construction (||h||<=sqrt(k)); it is the CV extrapolation + decode that
+    moves, not a violation of the boundedness theorem.
+  - FORECASTABILITY FAILS: constant-velocity latent forecasts are worse than
+    persistence at every horizon (skill h1=-0.34, h8=-0.71, h24=-2.69). CV
+    extrapolation is the wrong inductive bias for cyclic / mean-reverting data.
+
+Interpretation: the method's rollout model assumes a slowly-varying, trending
+(degradation) latent with an UNSTABLE competing sensor rollout. Stationary
+forecasting violates both premises. The reusable, transferable part here is the
+bounded AUTOENCODER (reconstruction), not the constant-velocity forecast.
+
+------------------------------------------------------------------------------
+FINAL CROSS-DOMAIN SCOPE (five datasets)
+------------------------------------------------------------------------------
+  DEGRADATION with UNSTABLE sensor dynamics (rho>1) -- method works:
+    * turbofan (C-MAPSS): bounded latent wins; monotone; RUL strong.
+    * PHM milling:        VAR 797x -> bounded latent wins; monotone wear;
+                          RUL ~2.4x better. FULL reproduction.
+    * IMS bearings:       VAR 181x -> bounded latent wins; recon/RUL need k>=3;
+                          monotonicity fails (abrupt failure).
+  DEGRADATION with STABLE sensor dynamics (rho~1) -- no stability gap:
+    * NASA battery:       VAR already stable; heterogeneity dominates.
+  STATIONARY FORECASTING (rho<1, cyclic) -- core rollout does not apply:
+    * Beijing air quality: VAR contractive; CV rollout drifts and loses to
+                           persistence; only reconstruction transfers.
+
+  UNIFIED STATEMENT: the bounded-latent stable-rollout contribution reproduces
+  precisely when (i) degradation is gradual/trending and (ii) the competing
+  sensor-space rollout is unstable (rho>1). It provides no benefit when sensor
+  dynamics are already stable, and the constant-velocity rollout is unsuited to
+  stationary/cyclic forecasting. Reconstruction (the bounded AE) transfers
+  universally; the stability advantage and monotone-health prior are
+  regime-specific.
+
+The original block reason (kept for provenance):
+  No external public degradation dataset was available in this workspace and the
+  environment could not fetch one. Provide --data <path to long-format
+  parquet/csv with unit_id, cycle, sensor columns> to run the generic path.

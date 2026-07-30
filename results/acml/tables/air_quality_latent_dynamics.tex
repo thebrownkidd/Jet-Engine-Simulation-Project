@@ -1,0 +1,20 @@
+\begin{table}[t]
+\centering
+\caption{air_quality: context-conditioned bounded latent dynamics vs baselines. Forecast skill vs persistence (mean over seeds), closed-loop free-run growth, boundedness and latent box-saturation.}
+\label{tab:air_quality_latentdyn}
+\begin{tabular}{lrrrrrrrrrrrrr}
+\toprule
+model & skill\_h1 & skill\_h8 & skill\_h24 & skill\_h48 & skill\_h24\_std & nrmse\_h1 & nrmse\_h48 & freerun\_growth & bounded & lat\_max\_norm & sat\_frac & n\_params & train\_s \\
+\midrule
+persistence & 0.000 & 0.000 & 0.000 & 0.000 & 0.000 & 0.437 & 1.312 & 1.000 & True & nan & nan & 0 & 0.000 \\
+cv & -0.373 & -0.721 & -2.764 & -1.498 & 0.000 & 0.512 & 2.074 & 9.518 & False & 1.414 & 0.635 & 0 & 0.000 \\
+ar1 & -0.389 & -0.768 & 0.580 & 0.247 & 0.000 & 0.515 & 1.139 & 0.817 & True & 0.754 & 0.000 & 0 & 0.000 \\
+var\_sensor & 0.017 & -0.476 & 0.613 & 0.424 & 0.000 & 0.434 & 0.996 & 0.014 & True & nan & nan & 0 & 0.000 \\
+mlp\_noctx & -0.458 & -1.120 & 0.589 & 0.273 & 0.010 & 0.528 & 1.119 & 1.259 & True & 0.753 & 0.000 & 4482 & 35.650 \\
+mlp\_ctx & -0.275 & -1.303 & 0.616 & 0.394 & 0.010 & 0.494 & 1.021 & 1.373 & True & 0.778 & 0.000 & 4866 & 37.640 \\
+mlp\_ctx\_noproj & -0.274 & -1.301 & 0.615 & 0.395 & 0.006 & 0.494 & 1.020 & 1.389 & True & 0.777 & 0.000 & 4866 & 26.410 \\
+mlp\_ctx\_onestep & -0.087 & -0.702 & 0.572 & 0.435 & 0.028 & 0.456 & 0.986 & 1.428 & True & 0.796 & 0.000 & 4866 & 15.340 \\
+sensor\_mlp\_ctx & 0.158 & -0.717 & 0.614 & 0.565 & 0.037 & 0.401 & 0.863 & 0.882 & True & nan & nan & 6027 & 32.180 \\
+\bottomrule
+\end{tabular}
+\end{table}

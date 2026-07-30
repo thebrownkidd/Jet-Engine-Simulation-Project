@@ -1,0 +1,14 @@
+\begin{table}[t]
+\centering
+\caption{IMS bearing external validation: bounded latent manifold vs unbounded AE vs sensor-space VAR.}
+\label{tab:ims_bearing}
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+model & rho & recon\_mean\_r2 & recon\_min\_r2 & freerun\_growth & bounded & kappa & mono\_viol & rul\_rmse & rul\_r2 & base\_rmse \\
+\midrule
+manifold\_bounded & nan & -0.663 & -4.684 & 2.030 & True & 0.002 & 0.498 & 34.546 & -1.294 & 22.810 \\
+ae\_unbounded & nan & 0.351 & -0.460 & 3.083 & True & 0.006 & 0.492 & nan & nan & nan \\
+var\_sensor & 1.016 & nan & nan & 181.289 & False & nan & nan & nan & nan & nan \\
+\bottomrule
+\end{tabular}
+\end{table}
