@@ -1,0 +1,9 @@
+dataset,lambda_m,lambda_s,recon_mean_r2,kappa,cv_skill_k20,rul_rmse,note
+FD001,0,0,TBD,TBD,TBD,TBD,bounded/no-pen equivalent baseline
+FD001,1,0.5,TBD,TBD,TBD,TBD,
+FD001,5,2,TBD,TBD,TBD,TBD,
+FD001,10,5,TBD,TBD,TBD,TBD,
+FD002,0,0,TBD,TBD,TBD,TBD,bounded/no-pen equivalent baseline
+FD002,1,0.5,TBD,TBD,TBD,TBD,
+FD002,5,2,TBD,TBD,TBD,TBD,
+FD002,10,5,TBD,TBD,TBD,TBD,

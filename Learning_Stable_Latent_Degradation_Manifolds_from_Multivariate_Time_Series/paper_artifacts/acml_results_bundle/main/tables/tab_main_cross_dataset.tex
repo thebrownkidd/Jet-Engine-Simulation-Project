@@ -1,0 +1,15 @@
+\begin{table}[t]
+\centering
+\caption{Main cross-dataset results of the final bounded latent model. VAR diverges (rho>1, large growth) while the manifold rollout stays bounded.}
+\label{tab:main_cross_dataset}
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Dataset & Regimes & rho2 & ReconR2 & rhoVAR & VARgrowth & ManifNorm & RUL\_RMSE & RUL\_R2 \\
+\midrule
+FD001 & 1 & 0.965 & 0.930 & 1.020 & 759.946 & 5.987 & 14.529 & 0.878 \\
+FD002 & 6 & 0.795 & 0.865 & 1.016 & 467.725 & 2.290 & 27.022 & 0.748 \\
+FD003 & 1 & 0.851 & 0.960 & 1.018 & 57.622 & 4.331 & 16.309 & 0.845 \\
+FD004 & 6 & 0.849 & 0.930 & 1.015 & 25.033 & 3.583 & 27.576 & 0.744 \\
+\bottomrule
+\end{tabular}
+\end{table}

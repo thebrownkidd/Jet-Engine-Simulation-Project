@@ -1,0 +1,18 @@
+Dear Editor-in-Chief,
+
+Please find enclosed our manuscript, "Learning Bounded Latent Degradation Dynamics for Stable Rollout and Remaining Useful Life Prediction," submitted for consideration in Engineering Applications of Artificial Intelligence.
+
+This paper addresses a practical stability problem in AI-based prognostics: multivariate degradation forecasts often become unreliable when a model is recursively rolled out beyond its training horizon, which limits their usefulness for real-world remaining-useful-life (RUL) estimation. We propose an algorithm that learns a bounded, low-dimensional latent representation of degradation — combining operating-regime normalization, sensor denoising and selection, and a monotonicity/smoothness-regularized autoencoder — and show theoretically and empirically that this bounded geometry acts as a dynamical regularizer for stable long-horizon rollout.
+
+The AI contribution is a theoretical framework separating three distinct mechanisms governing rollout behavior (sensor-space closed-loop divergence, bounded latent rollout, and smoothness-controlled forecastability), together with the algorithm that operationalizes it. The engineering application is validated on the NASA C-MAPSS turbofan degradation benchmark across four subsets spanning multiple operating regimes and fault modes, where the method remains stable under free-run rollout while standard VAR and several neural sequence baselines diverge, and yields useful downstream RUL predictions (RMSE 14.53–27.58 cycles across subsets).
+
+We believe this work is a good fit for the journal given its focus on validated, practically-motivated AI applications in engineering systems, and its emphasis on reproducible experimental protocols.
+
+This manuscript is original, has not been published previously, and is not under consideration elsewhere. All authors have approved the submission. There are no conflicts of interest to declare, and no external funding was received for this work.
+
+Thank you for considering our submission. We look forward to your response.
+
+Sincerely,
+Arpit Goel
+TwinSim Labs
+arpit@thebrownkid.in

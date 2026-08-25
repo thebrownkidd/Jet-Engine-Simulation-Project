@@ -1,0 +1,328 @@
+%% ============================================================
+%% References for: Learning Bounded Latent Degradation Dynamics
+%% for Stable Rollout and Remaining Useful Life Prediction
+%% ============================================================
+
+%% ---------- Dataset / benchmark ----------
+
+@misc{nasa_cmapss,
+  author       = {{NASA}},
+  title        = {{CMAPSS Jet Engine Simulated Data}},
+  howpublished = {NASA Open Data Portal},
+  year         = {2008},
+  note         = {Accessed 2026}
+}
+
+@misc{saxena2008turbofan,
+  author       = {Saxena, Abhinav and Goebel, Kai},
+  title        = {Turbofan Engine Degradation Simulation Data Set},
+  year         = {2008},
+  howpublished = {NASA Ames Prognostics Data Repository},
+  institution  = {NASA Ames Research Center},
+  note         = {NASA Prognostics Center of Excellence}
+}
+
+@inproceedings{saxena2008damage,
+  author    = {Saxena, Abhinav and Goebel, Kai and Simon, Don and Eklund, Neil},
+  title     = {Damage Propagation Modeling for Aircraft Engine Run-to-Failure Simulation},
+  booktitle = {Proceedings of the 1st International Conference on Prognostics and Health Management},
+  year      = {2008},
+  address   = {Denver, CO, USA}
+}
+
+%% ---------- RUL estimation / health indicators ----------
+
+@article{si2011remaining,
+  author  = {Si, Xiao-Sheng and Wang, Wenbin and Hu, Chang-Hua and Zhou, Dong-Hua},
+  title   = {Remaining Useful Life Estimation -- A Review on the Statistical Data Driven Approaches},
+  journal = {European Journal of Operational Research},
+  volume  = {213},
+  number  = {1},
+  pages   = {1--14},
+  year    = {2011},
+  doi     = {10.1016/j.ejor.2010.11.018}
+}
+
+@inproceedings{coble2009identifying,
+  author    = {Coble, Jamie and Hines, J. Wesley},
+  title     = {Identifying Optimal Prognostic Parameters from Data: A Genetic Algorithms Approach},
+  booktitle = {Annual Conference of the Prognostics and Health Management Society},
+  year      = {2009}
+}
+
+@article{tefera2025constraint,
+  author  = {Tefera, Yonas and Van Baelen, Quinten and Meire, Maarten and Luca, Stijn and Karsmakers, Peter},
+  title   = {Constraint-Guided Learning of Data-Driven Health Indicator Models: An Application on Bearings},
+  journal = {International Journal of Prognostics and Health Management},
+  volume  = {16},
+  number  = {2},
+  year    = {2025},
+  doi     = {10.36001/ijphm.2025.v16i2.4268}
+}
+
+@article{alomari2023aficv,
+  author  = {Alomari, Yazan and And{\'o}, M{\'a}ty{\'a}s and Baptista, Marcia L.},
+  title   = {Advancing Aircraft Engine RUL Predictions: An Interpretable Integrated Approach of Feature Engineering and Aggregated Feature Importance},
+  journal = {Scientific Reports},
+  volume  = {13},
+  pages   = {13466},
+  year    = {2023},
+  doi     = {10.1038/s41598-023-40315-1}
+}
+
+@article{deng2024cnnlstmattention,
+  author  = {Deng, Sizhe and Zhou, Jian},
+  title   = {Prediction of Remaining Useful Life of Aero-Engines Based on CNN-LSTM-Attention},
+  journal = {International Journal of Computational Intelligence Systems},
+  volume  = {17},
+  number  = {232},
+  year    = {2024},
+  doi     = {10.1007/s44196-024-00639-w}
+}
+
+@article{li2025ttsnet,
+  author  = {Li, Zhaofei and Luo, Shilin and Liu, Haiqing and Tang, Chaobin and Miao, Jianguo},
+  title   = {{TTSNet}: Transformer--Temporal Convolutional Network--Self-Attention with Feature Fusion for Prediction of Remaining Useful Life of Aircraft Engines},
+  journal = {Sensors},
+  volume  = {25},
+  number  = {2},
+  pages   = {432},
+  year    = {2025},
+  doi     = {10.3390/s25020432}
+}
+
+%% ---------- Deep learning for prognostics (CNN / LSTM / GRU / TCN) ----------
+
+@inproceedings{babu2016deep,
+  author    = {Babu, Giduthuri Sateesh and Zhao, Peilin and Li, Xiao-Li},
+  title     = {Deep Convolutional Neural Network Based Regression Approach for Estimation of Remaining Useful Life},
+  booktitle = {Database Systems for Advanced Applications},
+  series    = {Lecture Notes in Computer Science},
+  volume    = {9642},
+  pages     = {214--228},
+  publisher = {Springer},
+  year      = {2016},
+  doi       = {10.1007/978-3-319-32025-0_14}
+}
+
+@article{li2018deepcnn,
+  author  = {Li, Xiang and Ding, Qian and Sun, Jian-Qiao},
+  title   = {Remaining Useful Life Estimation in Prognostics Using Deep Convolution Neural Networks},
+  journal = {Reliability Engineering \& System Safety},
+  volume  = {172},
+  pages   = {1--11},
+  year    = {2018},
+  doi     = {10.1016/j.ress.2017.11.021}
+}
+
+@inproceedings{zheng2017lstm,
+  author    = {Zheng, Shuai and Ristovski, Kosta and Farahat, Ahmed and Gupta, Chetan},
+  title     = {Long Short-Term Memory Network for Remaining Useful Life Estimation},
+  booktitle = {2017 IEEE International Conference on Prognostics and Health Management},
+  pages     = {88--95},
+  year      = {2017},
+  doi       = {10.1109/ICPHM.2017.7998311}
+}
+
+@article{hochreiter1997lstm,
+  author  = {Hochreiter, Sepp and Schmidhuber, J{\"u}rgen},
+  title   = {Long Short-Term Memory},
+  journal = {Neural Computation},
+  volume  = {9},
+  number  = {8},
+  pages   = {1735--1780},
+  year    = {1997},
+  doi     = {10.1162/neco.1997.9.8.1735}
+}
+
+@inproceedings{cho2014gru,
+  author    = {Cho, Kyunghyun and van Merri{\"e}nboer, Bart and Gulcehre, Caglar and Bahdanau, Dzmitry and Bougares, Fethi and Schwenk, Holger and Bengio, Yoshua},
+  title     = {Learning Phrase Representations using RNN Encoder--Decoder for Statistical Machine Translation},
+  booktitle = {Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing},
+  pages     = {1724--1734},
+  year      = {2014},
+  doi       = {10.3115/v1/D14-1179}
+}
+
+@article{bai2018tcn,
+  author  = {Bai, Shaojie and Kolter, J. Zico and Koltun, Vladlen},
+  title   = {An Empirical Evaluation of Generic Convolutional and Recurrent Networks for Sequence Modeling},
+  journal = {arXiv preprint arXiv:1803.01271},
+  year    = {2018}
+}
+
+@article{pascanu2013difficulty,
+  author  = {Pascanu, Razvan and Mikolov, Tomas and Bengio, Yoshua},
+  title   = {On the Difficulty of Training Recurrent Neural Networks},
+  journal = {Proceedings of the 30th International Conference on Machine Learning (PMLR)},
+  volume  = {28},
+  number  = {3},
+  pages   = {1310--1318},
+  year    = {2013}
+}
+
+%% ---------- Attention-based RUL / prognostics ----------
+
+@article{liu2021featureattention,
+  author  = {Liu, Hui and Liu, Zhenyu and Jia, Weiqiang and Lin, Xianke},
+  title   = {Remaining Useful Life Prediction Using a Novel Feature-Attention-Based End-to-End Approach},
+  journal = {IEEE Transactions on Industrial Informatics},
+  volume  = {17},
+  number  = {2},
+  pages   = {1197--1207},
+  year    = {2021},
+  doi     = {10.1109/TII.2020.2991804}
+}
+
+@article{zhang2022bigru,
+  author  = {Zhang, Jiujian and Jiang, Yuchen and Wu, Shunyi and Li, Xiang and Luo, Hao},
+  title   = {Prediction of Remaining Useful Life Based on Bidirectional Gated Recurrent Unit with Temporal Self-Attention Mechanism},
+  journal = {Reliability Engineering \& System Safety},
+  volume  = {221},
+  pages   = {108297},
+  year    = {2022},
+  doi     = {10.1016/j.ress.2021.108297}
+}
+
+@article{zhang2020attentionlstm,
+  author  = {Zhang, Hao and Li, Xiang and Wang, Yang},
+  title   = {Attention-Based {LSTM} Network for Rotatory Machine Remaining Useful Life Prediction},
+  journal = {IEEE Access},
+  volume  = {8},
+  pages   = {132188--132199},
+  year    = {2020},
+  doi     = {10.1109/ACCESS.2020.3010068}
+}
+
+%% ---------- Autoencoders / representation learning ----------
+
+@inproceedings{vincent2008dae,
+  author    = {Vincent, Pascal and Larochelle, Hugo and Bengio, Yoshua and Manzagol, Pierre-Antoine},
+  title     = {Extracting and Composing Robust Features with Denoising Autoencoders},
+  booktitle = {Proceedings of the 25th International Conference on Machine Learning},
+  pages     = {1096--1103},
+  year      = {2008},
+  doi       = {10.1145/1390156.1390294}
+}
+
+@inproceedings{kingma2014autoencoding,
+  author    = {Kingma, Diederik P. and Welling, Max},
+  title     = {Auto-Encoding Variational Bayes},
+  booktitle = {International Conference on Learning Representations},
+  year      = {2014}
+}
+
+@inproceedings{rezende2014stochastic,
+  author    = {Rezende, Danilo Jimenez and Mohamed, Shakir and Wierstra, Daan},
+  title     = {Stochastic Backpropagation and Approximate Inference in Deep Generative Models},
+  booktitle = {Proceedings of the 31st International Conference on Machine Learning (PMLR)},
+  volume    = {32},
+  number    = {2},
+  pages     = {1278--1286},
+  year      = {2014}
+}
+
+%% ---------- Koopman theory / latent dynamics ----------
+
+@article{koopman1931hamiltonian,
+  author  = {Koopman, Bernard O.},
+  title   = {Hamiltonian Systems and Transformation in Hilbert Space},
+  journal = {Proceedings of the National Academy of Sciences of the United States of America},
+  volume  = {17},
+  number  = {5},
+  pages   = {315--318},
+  year    = {1931},
+  doi     = {10.1073/pnas.17.5.315}
+}
+
+@article{lusch2018deep,
+  author  = {Lusch, Bethany and Kutz, J. Nathan and Brunton, Steven L.},
+  title   = {Deep Learning for Universal Linear Embeddings of Nonlinear Dynamics},
+  journal = {Nature Communications},
+  volume  = {9},
+  number  = {4950},
+  year    = {2018},
+  doi     = {10.1038/s41467-018-07210-0}
+}
+
+@inproceedings{erichson2020forecasting,
+  author    = {Azencot, Omri and Erichson, N. Benjamin and Lin, Vanessa and Mahoney, Michael W.},
+  title     = {Forecasting Sequential Data Using Consistent Koopman Autoencoders},
+  booktitle = {Proceedings of the 37th International Conference on Machine Learning},
+  pages     = {475--485},
+  year      = {2020}
+}
+
+@article{fries2022lasdi,
+  author  = {Fries, William D. and He, Xiaolong and Choi, Youngsoo},
+  title   = {{LaSDI}: Parametric Latent Space Dynamics Identification},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {399},
+  pages   = {115436},
+  year    = {2022},
+  doi     = {10.1016/j.cma.2022.115436}
+}
+
+@article{bonneville2024gplasdi,
+  author  = {Bonneville, Christophe and Choi, Youngsoo and Ghosh, Debojyoti and Belof, Jonathan L.},
+  title   = {{GPLaSDI}: Gaussian Process-Based Interpretable Latent Space Dynamics Identification through Deep Autoencoder},
+  journal = {Computer Methods in Applied Mechanics and Engineering},
+  volume  = {418},
+  pages   = {116535},
+  year    = {2024},
+  doi     = {10.1016/j.cma.2023.116535}
+}
+
+%% ---------- Physics-informed / constrained learning ----------
+
+@article{raissi2019physics,
+  author  = {Raissi, Maziar and Perdikaris, Paris and Karniadakis, George E.},
+  title   = {Physics-Informed Neural Networks: A Deep Learning Framework for Solving Forward and Inverse Problems Involving Nonlinear Partial Differential Equations},
+  journal = {Journal of Computational Physics},
+  volume  = {378},
+  pages   = {686--707},
+  year    = {2019},
+  doi     = {10.1016/j.jcp.2018.10.045}
+}
+
+%% ---------- Time series stability / dynamical systems theory ----------
+
+@book{hamilton1994time,
+  author    = {Hamilton, James D.},
+  title     = {Time Series Analysis},
+  publisher = {Princeton University Press},
+  year      = {1994}
+}
+
+@book{lutkepohl2005new,
+  author    = {L{\"u}tkepohl, Helmut},
+  title     = {New Introduction to Multiple Time Series Analysis},
+  publisher = {Springer},
+  year      = {2005},
+  doi       = {10.1007/978-3-540-27752-1}
+}
+
+@book{brockwell2016introduction,
+  author    = {Brockwell, Peter J. and Davis, Richard A.},
+  title     = {Introduction to Time Series and Forecasting},
+  edition   = {3rd},
+  publisher = {Springer},
+  year      = {2016},
+  doi       = {10.1007/978-3-319-29854-2}
+}
+
+@book{ljung1999system,
+  author    = {Ljung, Lennart},
+  title     = {System Identification: Theory for the User},
+  edition   = {2nd},
+  publisher = {Prentice Hall},
+  year      = {1999}
+}
+
+@book{munkres2000topology,
+  author    = {Munkres, James R.},
+  title     = {Topology},
+  edition   = {2nd},
+  publisher = {Prentice Hall},
+  year      = {2000}
+}

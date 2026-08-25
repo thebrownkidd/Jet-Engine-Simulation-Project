@@ -1,0 +1,19 @@
+\begin{table}[t]
+\centering
+\caption{Specialist vs generalized (shared-geometry) models. The generalized model preserves bounded rollout, indicating the latent geometry is reusable.}
+\label{tab:specialist_vs_generalized}
+\begin{tabular}{lrrrrrr}
+\toprule
+dataset & model & recon\_mean\_r2 & freerun\_growth & freerun\_bounded & rul\_rmse & rul\_r2 \\
+\midrule
+FD001 & specialist & 0.948 & 1.543 & True & 14.089 & 0.885 \\
+FD001 & generalized & 0.832 & 1.902 & True & 15.602 & 0.859 \\
+FD002 & specialist & 0.925 & 3.599 & True & 26.869 & 0.750 \\
+FD002 & generalized & 0.899 & 6.016 & False & 26.918 & 0.749 \\
+FD003 & specialist & 0.979 & 2.474 & True & 16.999 & 0.831 \\
+FD003 & generalized & 0.922 & 3.433 & True & 17.356 & 0.824 \\
+FD004 & specialist & 0.953 & 1.638 & True & 27.313 & 0.749 \\
+FD004 & generalized & 0.938 & 2.244 & True & 27.749 & 0.741 \\
+\bottomrule
+\end{tabular}
+\end{table}

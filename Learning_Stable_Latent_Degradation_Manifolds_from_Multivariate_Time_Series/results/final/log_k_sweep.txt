@@ -1,0 +1,66 @@
+﻿======================================================================
+K-AWARE SWEEP  FD001  (epochs=1500)
+======================================================================
+  FD001 k=1: recon=0.888 growth=x  0.72 bnd=True nrmse50=0.440 RUL=16.79 (feat dim=2)
+  FD001 k=2: recon=0.968 growth=x  1.30 bnd=True nrmse50=0.465 RUL=14.91 (feat dim=4)
+  FD001 k=3: recon=0.969 growth=x  1.37 bnd=True nrmse50=0.485 RUL=13.72 (feat dim=6)
+  FD001 k=4: recon=0.975 growth=x  1.28 bnd=True nrmse50=0.561 RUL=16.84 (feat dim=8)
+  FD001 k=5: recon=0.969 growth=x  1.35 bnd=True nrmse50=0.479 RUL=14.82 (feat dim=10)
+  FD001 k=6: recon=0.975 growth=x  1.03 bnd=True nrmse50=0.555 RUL=16.89 (feat dim=12)
+======================================================================
+K-AWARE SWEEP  FD002  (epochs=1500)
+======================================================================
+  FD002 k=1: recon=0.808 growth=x  0.84 bnd=True nrmse50=0.723 RUL=29.16 (feat dim=2)
+  FD002 k=2: recon=0.913 growth=x  2.38 bnd=True nrmse50=0.886 RUL=27.27 (feat dim=4)
+  FD002 k=3: recon=0.930 growth=x  5.20 bnd=False nrmse50=0.935 RUL=27.64 (feat dim=6)
+  FD002 k=4: recon=0.926 growth=x  8.62 bnd=False nrmse50=0.942 RUL=27.42 (feat dim=8)
+  FD002 k=5: recon=0.931 growth=x  5.81 bnd=False nrmse50=0.958 RUL=28.01 (feat dim=10)
+  FD002 k=6: recon=0.932 growth=x  5.82 bnd=False nrmse50=0.945 RUL=29.02 (feat dim=12)
+======================================================================
+K-AWARE SWEEP  FD003  (epochs=1500)
+======================================================================
+  FD003 k=1: recon=0.947 growth=x  0.84 bnd=True nrmse50=0.324 RUL=19.46 (feat dim=2)
+  FD003 k=2: recon=0.980 growth=x  2.62 bnd=True nrmse50=0.295 RUL=17.27 (feat dim=4)
+  FD003 k=3: recon=0.982 growth=x  1.30 bnd=True nrmse50=0.325 RUL=17.38 (feat dim=6)
+  FD003 k=4: recon=0.983 growth=x  1.85 bnd=True nrmse50=0.368 RUL=16.82 (feat dim=8)
+  FD003 k=5: recon=0.983 growth=x  2.46 bnd=True nrmse50=0.352 RUL=16.61 (feat dim=10)
+  FD003 k=6: recon=0.983 growth=x  1.91 bnd=True nrmse50=0.372 RUL=16.98 (feat dim=12)
+======================================================================
+K-AWARE SWEEP  FD004  (epochs=1500)
+======================================================================
+  FD004 k=1: recon=0.876 growth=x  0.91 bnd=True nrmse50=0.513 RUL=29.49 (feat dim=2)
+  FD004 k=2: recon=0.956 growth=x  1.05 bnd=True nrmse50=0.514 RUL=27.62 (feat dim=4)
+  FD004 k=3: recon=0.961 growth=x  1.36 bnd=True nrmse50=0.587 RUL=27.03 (feat dim=6)
+  FD004 k=4: recon=0.959 growth=x  1.22 bnd=True nrmse50=0.615 RUL=27.61 (feat dim=8)
+  FD004 k=5: recon=0.964 growth=x  2.09 bnd=True nrmse50=0.622 RUL=27.44 (feat dim=10)
+  FD004 k=6: recon=0.968 growth=x  2.01 bnd=True nrmse50=0.673 RUL=27.91 (feat dim=12)
+
+dataset  k  recon_mean_r2  freerun_growth  freerun_bounded  nrmse_h50  rul_rmse   rul_r2
+  FD001  1       0.888032        0.723215             True   0.439889 16.794248 0.836672
+  FD001  2       0.968493        1.300667             True   0.464908 14.908363 0.871294
+  FD001  3       0.968682        1.365132             True   0.485286 13.723946 0.890932
+  FD001  4       0.974832        1.284201             True   0.560877 16.840486 0.835771
+  FD001  5       0.968771        1.345063             True   0.478775 14.820923 0.872799
+  FD001  6       0.975281        1.028964             True   0.554655 16.886889 0.834865
+  FD002  1       0.807618        0.842207             True   0.722539 29.155865 0.706080
+  FD002  2       0.912943        2.379567             True   0.886444 27.272349 0.742828
+  FD002  3       0.930299        5.195625            False   0.934982 27.640079 0.735846
+  FD002  4       0.925665        8.615244            False   0.941818 27.416316 0.740106
+  FD002  5       0.930715        5.806174            False   0.958025 28.007529 0.728776
+  FD002  6       0.931862        5.821384            False   0.945191 29.015252 0.708908
+  FD003  1       0.946706        0.840416             True   0.324168 19.455057 0.779120
+  FD003  2       0.979753        2.620313             True   0.294874 17.271517 0.825919
+  FD003  3       0.981831        1.295104             True   0.324939 17.382087 0.823683
+  FD003  4       0.983041        1.848621             True   0.368490 16.819242 0.834916
+  FD003  5       0.982878        2.461061             True   0.351720 16.611320 0.838973
+  FD003  6       0.982986        1.905449             True   0.371736 16.980341 0.831739
+  FD004  1       0.876414        0.907280             True   0.512502 29.490560 0.707454
+  FD004  2       0.955626        1.050266             True   0.514100 27.615084 0.743480
+  FD004  3       0.961413        1.356736             True   0.587017 27.032082 0.754197
+  FD004  4       0.959260        1.218649             True   0.615227 27.609647 0.743581
+  FD004  5       0.963834        2.086319             True   0.622279 27.444131 0.746647
+  FD004  6       0.967994        2.010076             True   0.673212 27.908408 0.738002
+
+saved -> C:\Work\Jet-Engine-Simulation-Project\results\acml\tables\k_aware_dim_sweep.csv
+saved -> C:\Work\Jet-Engine-Simulation-Project\results\acml\figures\k_vs_reconstruction_and_stability.png
+saved -> C:\Work\Jet-Engine-Simulation-Project\results\acml\figures\k_vs_rul.png

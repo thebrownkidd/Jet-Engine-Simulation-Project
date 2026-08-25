@@ -1,0 +1,6 @@
+model_class,rollout_type,state_space,growth_range,bounded,evidence_source
+VAR1,closed_loop,sensor,25.03x to 759.95x,False,baselines_extended.csv
+VAR2,closed_loop,sensor,26.97x to 747.93x,False,baselines_extended.csv
+TCN,closed_loop,sensor,1.35x to 1272419.78x,Mixed,baselines_extended.csv
+AE_unbounded_no_pen,open_loop,latent_constant_velocity,1.25x to 1.82x,True,boundedness_mechanism.csv
+AE_bounded_full,open_loop,latent_constant_velocity,1.30x to 2.38x,True,boundedness_mechanism.csv

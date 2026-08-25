@@ -43,3 +43,14 @@ data_cache.pt
 results/models/
 .venv
 .github
+# LaTeX build intermediates
+*.aux
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+
+# Large bundled archives
+results.zip

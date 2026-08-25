@@ -1,0 +1,5 @@
+dataset,regimes,fault_modes,train_units,test_units,sensors,operating_vars
+FD001,1,1,100,100,21,3
+FD002,6,1,260,259,21,3
+FD003,1,2,100,100,21,3
+FD004,6,2,249,248,21,3

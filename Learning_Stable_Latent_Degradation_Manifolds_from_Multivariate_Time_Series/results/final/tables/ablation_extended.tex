@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{Extended ablation study. Bounded latent geometry controls free-run boundedness; monotonicity and smoothness reduce curvature and improve RUL.}
+\label{tab:ablation_extended}
+\begin{tabular}{lrrrrrrr}
+\toprule
+dataset & variant & recon\_mean\_r2 & kappa & freerun\_growth & freerun\_bounded & cv\_skill\_k20 & rul\_rmse \\
+\midrule
+FD001 & full & 0.968 & 0.002 & 1.301 & True & 0.756 & 14.908 \\
+FD001 & no\_regime\_norm & 0.968 & 0.002 & 1.301 & True & 0.756 & 14.908 \\
+FD001 & no\_mono & 0.969 & 0.003 & 1.328 & True & 0.739 & 14.177 \\
+FD001 & no\_smooth & 0.957 & 0.002 & 1.226 & True & 0.758 & 14.409 \\
+FD001 & no\_mono\_smooth & 0.969 & 0.003 & 1.259 & True & 0.738 & 13.965 \\
+FD001 & bounded\_no\_pen & 0.969 & 0.003 & 1.259 & True & 0.738 & 13.965 \\
+FD001 & unbounded\_ae & 0.969 & 0.014 & 1.249 & True & 0.769 & 14.580 \\
+FD002 & full & 0.913 & 0.002 & 2.380 & True & 0.676 & 27.272 \\
+FD002 & no\_regime\_norm & 0.999 & 0.000 & 1.654 & True & -0.129 & 40.481 \\
+FD002 & no\_mono & 0.915 & 0.007 & 3.846 & True & 0.607 & 27.911 \\
+FD002 & no\_smooth & 0.891 & 0.002 & 1.842 & True & 0.675 & 27.056 \\
+FD002 & no\_mono\_smooth & 0.915 & 0.008 & 3.365 & True & 0.506 & 27.432 \\
+FD002 & bounded\_no\_pen & 0.915 & 0.008 & 3.365 & True & 0.506 & 27.432 \\
+FD002 & unbounded\_ae & 0.917 & 0.035 & 1.823 & True & 0.276 & 28.176 \\
+\bottomrule
+\end{tabular}
+\end{table}

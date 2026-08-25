@@ -1,0 +1,35 @@
+\begin{table}[t]
+\centering
+\caption{Extended rollout baselines including a TCN forecaster. Neural models can be competitive at short horizons but closed-loop boundedness is inconsistent; the bounded manifold stays bounded everywhere.}
+\label{tab:baselines_extended}
+\begin{tabular}{lrrrrrr}
+\toprule
+dataset & model & rho & freerun\_growth & bounded & nrmse\_h1 & nrmse\_h50 \\
+\midrule
+FD001 & manifold & nan & 1.477 & True & 0.173 & 0.467 \\
+FD001 & var1 & 1.020 & 759.946 & False & 0.097 & 0.424 \\
+FD001 & var2 & 1.020 & 747.932 & False & 0.097 & 0.425 \\
+FD001 & lstm & nan & 2.869 & True & 0.097 & 0.853 \\
+FD001 & gru & nan & 2.790 & True & 0.096 & 0.907 \\
+FD001 & tcn & nan & 3.189 & True & 0.096 & 0.476 \\
+FD002 & manifold & nan & 1.503 & True & 0.297 & 1.453 \\
+FD002 & var1 & 1.016 & 467.725 & False & 0.178 & 0.510 \\
+FD002 & var2 & 1.016 & 476.289 & False & 0.178 & 0.513 \\
+FD002 & lstm & nan & 4.741 & True & 0.185 & 2.125 \\
+FD002 & gru & nan & 13.012 & False & 0.181 & 0.875 \\
+FD002 & tcn & nan & 1272419.776 & False & 0.181 & 1.376 \\
+FD003 & manifold & nan & 1.267 & True & 0.124 & 0.312 \\
+FD003 & var1 & 1.018 & 57.622 & False & 0.081 & 0.381 \\
+FD003 & var2 & 1.018 & 56.562 & False & 0.079 & 0.379 \\
+FD003 & lstm & nan & 0.904 & True & 0.079 & 0.531 \\
+FD003 & gru & nan & 1.546 & True & 0.080 & 1.173 \\
+FD003 & tcn & nan & 2.815 & True & 0.080 & 0.384 \\
+FD004 & manifold & nan & 0.847 & True & 0.188 & 0.561 \\
+FD004 & var1 & 1.015 & 25.033 & False & 0.101 & 0.385 \\
+FD004 & var2 & 1.015 & 26.971 & False & 0.099 & 0.385 \\
+FD004 & lstm & nan & 3.423 & True & 0.100 & 0.619 \\
+FD004 & gru & nan & 1.942 & True & 0.101 & 0.715 \\
+FD004 & tcn & nan & 1.352 & True & 0.101 & 0.525 \\
+\bottomrule
+\end{tabular}
+\end{table}

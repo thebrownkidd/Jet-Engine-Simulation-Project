@@ -1,0 +1,22 @@
+﻿shared sensor set (14): ['s2', 's3', 's4', 's7', 's8', 's9', 's11', 's12', 's13', 's14', 's15', 's17', 's20', 's21']
+  FD001 specialist : recon=0.948 growth=x1.54 RUL=14.09
+  FD001 generalized: recon=0.832 growth=x1.90 RUL=15.60
+  FD002 specialist : recon=0.925 growth=x3.60 RUL=26.87
+  FD002 generalized: recon=0.899 growth=x6.02 RUL=26.92
+  FD003 specialist : recon=0.979 growth=x2.47 RUL=17.00
+  FD003 generalized: recon=0.922 growth=x3.43 RUL=17.36
+  FD004 specialist : recon=0.953 growth=x1.64 RUL=27.31
+  FD004 generalized: recon=0.938 growth=x2.24 RUL=27.75
+
+dataset       model  recon_mean_r2  freerun_growth  freerun_bounded  rul_rmse   rul_r2
+  FD001  specialist       0.948392        1.543425             True 14.088980 0.885052
+  FD001 generalized       0.831921        1.901737             True 15.601904 0.859040
+  FD002  specialist       0.925449        3.598779             True 26.869185 0.750376
+  FD002 generalized       0.898642        6.016020            False 26.917910 0.749470
+  FD003  specialist       0.979211        2.474313             True 16.999310 0.831363
+  FD003 generalized       0.921624        3.433306             True 17.355742 0.824217
+  FD004  specialist       0.953474        1.638059             True 27.312854 0.749065
+  FD004 generalized       0.938256        2.243944             True 27.749278 0.740981
+
+saved -> C:\Work\Jet-Engine-Simulation-Project\results\acml\tables\specialist_vs_generalized.csv
+saved -> C:\Work\Jet-Engine-Simulation-Project\results\acml\figures\specialist_vs_generalized.png
