@@ -54,3 +54,6 @@ results/models/
 
 # Large bundled archives
 results.zip
+
+# Exploratory work-in-progress
+wip/
