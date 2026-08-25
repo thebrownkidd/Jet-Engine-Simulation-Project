@@ -1,0 +1,20 @@
+Long-horizon multivariate time-series forecasting is often unstable when models
+are recursively rolled out in observation space. This problem is especially
+pronounced in degradation modelling, where sensor trajectories are noisy,
+regime-dependent, and only partially informative about latent health. We study
+whether low-dimensional bounded latent representations can act as dynamical
+regularizers for stable rollout. The proposed algorithm identifies operating
+regimes from control variables, normalizes sensor measurements within regimes,
+denoises the resulting trajectories, selects degradation-sensitive channels,
+and trains a bounded latent autoencoder with monotonicity and smoothness
+regularization on a primary health coordinate. We provide a theoretical
+analysis separating sensor-space closed-loop divergence, bounded latent
+rollout, and smoothness-controlled forecastability. Experiments on NASA
+C-MAPSS show that higher-dimensional latent spaces can improve reconstruction
+while weakening rollout stability. Ablations further show that finite-horizon
+decoded boundedness is not unique to the bounded latent model: an unbounded
+autoencoder may also remain numerically bounded under constant-velocity
+rollout because of small latent velocities and decoder saturation. The main
+empirical advantage of the proposed representation is therefore forecastability:
+lower latent curvature, higher forecast skill, and useful downstream
+remaining-useful-life prediction.
