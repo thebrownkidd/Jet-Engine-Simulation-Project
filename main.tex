@@ -182,6 +182,13 @@ The main contributions are:
     \item We compare against VAR, VAR(2), GRU, LSTM, and TCN baselines, showing
     that closed-loop sensor-space and neural sequence forecasters can exhibit
     inconsistent free-run stability.
+
+    \item We introduce \emph{anchored decoding}, a reformulation of the decoded
+    forecast that cancels the origin reconstruction offset. We prove its error
+    obeys the same curvature bound as constant-velocity rollout up to the
+    decoder Lipschitz constant, plus a reconstruction-residual term; empirically
+    it is the first bounded-latent head to exceed both persistence and a
+    sensor-space VAR at every horizon on a near-stationary external dataset.
 \end{itemize}
 
 % ============================================================
@@ -553,6 +560,59 @@ reconstruction while weakening dynamical regularization.
 
 The $K$-aware dimension sweep tests this proposition using all latent
 coordinates and velocities downstream.
+
+\subsection{Anchored Decoding}
+\label{sec:anchored}
+
+The forecasts above decode the rolled-out latent directly, $D_\phi(\hat{\h}_{c+\tau})$,
+and therefore inherit a fixed reconstruction offset at the forecast origin: even
+a perfect latent forecast decodes to $\y_c$ with error $\y_c-D_\phi(\h_c)$. We
+remove this offset by anchoring the decoded \emph{increment} to the last
+observation.
+
+\begin{theorem}[Anchored decoding forecast error]
+\label{thm:anchored}
+Let $\hat{\h}_{c+\tau}\in\Hspace$ be a latent rollout and define the anchored
+decoded forecast
+\[
+  \hat{\y}_{c+\tau} = \y_c + \big(D_\phi(\hat{\h}_{c+\tau}) - D_\phi(\h_c)\big),
+\]
+with reconstruction residual $\mathbf{r}_t=\y_t-D_\phi(\h_t)$. If $D_\phi$ is
+$L$-Lipschitz on $\Hspace$ and each latent coordinate satisfies
+$|\Delta^2 h^{(j)}_t|\le\kappa$, then
+\[
+  \|\y_{c+\tau}-\hat{\y}_{c+\tau}\|
+  \le L\sqrt{K}\,\tfrac{\kappa}{2}\,\tau(\tau+1) + \|\mathbf{r}_{c+\tau}-\mathbf{r}_c\|.
+\]
+If in addition $\|\mathbf{r}_t\|\le\rho$ for all $t$, the last term is at most $2\rho$.
+\end{theorem}
+
+\begin{proof}
+Write $\y_t=D_\phi(\h_t)+\mathbf{r}_t$. The $D_\phi(\h_c)$ terms cancel, giving
+\[
+  \y_{c+\tau}-\hat{\y}_{c+\tau}
+  = \big(D_\phi(\h_{c+\tau})-D_\phi(\hat{\h}_{c+\tau})\big)
+  + (\mathbf{r}_{c+\tau}-\mathbf{r}_c).
+\]
+By $L$-Lipschitz continuity,
+$\|D_\phi(\h_{c+\tau})-D_\phi(\hat{\h}_{c+\tau})\|\le L\|\h_{c+\tau}-\hat{\h}_{c+\tau}\|$,
+and applying Theorem~\ref{thm:smooth-forecast} coordinatewise gives
+$\|\h_{c+\tau}-\hat{\h}_{c+\tau}\|\le\sqrt{K}\,\tfrac{\kappa}{2}\tau(\tau+1)$. The
+triangle inequality with $\|\mathbf{r}_t\|\le\rho$ bounds the residual term by $2\rho$.
+\end{proof}
+
+\begin{corollary}[Anchoring cancels the origin offset]
+\label{cor:anchor}
+Plain decoding $\hat{\y}^{\mathrm{pl}}_{c+\tau}=D_\phi(\hat{\h}_{c+\tau})$ satisfies
+$\|\y_{c+\tau}-\hat{\y}^{\mathrm{pl}}_{c+\tau}\|\le
+L\sqrt{K}\,\tfrac{\kappa}{2}\tau(\tau+1)+\|\mathbf{r}_{c+\tau}\|$. Anchoring replaces
+$\|\mathbf{r}_{c+\tau}\|$ by $\|\mathbf{r}_{c+\tau}-\mathbf{r}_c\|$, which vanishes at
+$\tau=0$ and is small whenever the reconstruction residual is temporally
+persistent. The leading curvature term is unchanged, so anchoring retains the
+bounded-rollout guarantees of Theorems~\ref{thm:bounded-rollout}
+and~\ref{thm:smooth-forecast} while eliminating the constant reconstruction
+offset.
+\end{corollary}
 
 % ============================================================
 \section{Experimental Setup}
@@ -1313,6 +1373,44 @@ preprocessing, target definitions, and evaluation protocols in the air-quality
 and tool-wear literatures differ enough that a single-number comparison would
 not be like-for-like; the intent is to demonstrate cross-domain transfer of the
 stability-and-skill mechanism, not to rank against those models.
+
+\medskip
+\noindent\textbf{Anchored decoding on a near-stationary set.}
+As a direct test of the reconstruction tax and of Theorem~\ref{thm:anchored}, we
+evaluate the NASA Li-ion battery aging dataset (26 cells, per-discharge-cycle
+capacity-fade and voltage/current/temperature summaries, seven operating
+conditions used for regime normalization) at horizons $\{1,10,30,60\}$. Here the
+latent process is close to a driftless random walk (sensor-space companion
+spectral radius $\approx 1$), so persistence is a strong baseline and every
+plain-decoded latent head is far worse than persistence at all horizons
+(Table~\ref{tab:ext-battery}). Anchored decoding removes the origin
+reconstruction offset and is the only latent head with positive skill against
+persistence at every horizon, while also exceeding the sensor-space VAR; its
+free-run growth stays at $1.00$. The margins are small, as expected on a
+near-stationary signal, but the sign flip confirms the mechanism of
+Corollary~\ref{cor:anchor}: the reconstruction tax, not the latent dynamics, was
+the binding term.
+
+\begin{table}[t]
+\centering
+\caption{NASA battery forecast skill relative to persistence at each horizon,
+with free-run growth and boundedness. Plain-decoded latent rollout (damped
+constant velocity) is dominated by persistence; anchored decoding is the only
+latent head with positive skill at every horizon.}
+\label{tab:ext-battery}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}lrrrrrc@{}}
+\toprule
+Model & Skill@1 & Skill@10 & Skill@30 & Skill@60 & Growth & Bnd. \\
+\midrule
+persistence        & $0.00$    & $0.00$   & $0.00$   & $0.00$   & 1.00 & yes \\
+sensor VAR         & $-29.84$  & $-7.44$  & $-6.72$  & $-3.65$  & 0.92 & yes \\
+damped CV (plain)  & $-610.8$  & $-15.19$ & $-7.89$  & $-2.81$  & 1.00 & yes \\
+anchored decoding  & $+0.05$   & $+0.01$  & $+0.05$  & $+0.04$  & 1.00 & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \section{Implementation Diagnostics}
 

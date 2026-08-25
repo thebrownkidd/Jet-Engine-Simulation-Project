@@ -95,7 +95,7 @@ DATASET_CONFIGS = {
                     "14 time+frequency vibration features per channel."),
     "battery": dict(
         feat_csv="data/processed/battery_features.csv",
-        lambda_mono=0.5, horizons=[1, 5, 15, 30], test_frac=0.35,
+        lambda_mono=1.0, horizons=[1, 10, 30, 60], test_frac=0.35,
         description="NASA Li-ion battery — 26 batteries, 10 per-discharge-cycle "
                     "features (capacity fade + V/I/T summaries)."),
     "phm_milling": dict(
@@ -109,6 +109,16 @@ DATASET_CONFIGS = {
         description="Beijing multi-site air quality — 12 stations, hourly "
                     "PM2.5/PM10/meteorology, 11 variables (no degradation; "
                     "cyclic seasonal forecasting)."),
+    "femto_bearing": dict(
+        feat_csv="data/processed/femto_features.csv",
+        lambda_mono=5.0, horizons=[1, 10, 25, 50], test_frac=0.35,
+        description="FEMTO/PRONOSTIA bearings — accelerated run-to-failure "
+                    "bearing tests under multiple operating conditions."),
+    "ncmapss": dict(
+        feat_csv="data/processed/ncmapss_features.csv",
+        lambda_mono=1.0, horizons=[1, 10, 25, 50], test_frac=0.30,
+        description="N-CMAPSS (Turbofan Degradation Simulation-2) — realistic "
+                    "flight-condition turbofan run-to-failure trajectories."),
 }
 
 ANCHORS = (0.5, 0.65, 0.8)
@@ -198,12 +208,13 @@ def _find_pca_elbow(train_data: np.ndarray, k_max: int = 10) -> int:
     return int(best_k)
 
 
-def k_sweep(tr_df, te_df, feats, lambda_mono, k_max=6, epochs=250, seed=0):
+def k_sweep(tr_df, te_df, feats, lambda_mono, k_max=6, epochs=250, seed=0,
+            lambda_smooth=0.5):
     """K-sweep: train AE at each k, record reconstruction R², find elbow."""
     results = []
     for k in range(1, k_max + 1):
         ae = X.train_ae(tr_df, feats, k=k, bounded=True,
-                        lambda_mono=lambda_mono, lambda_smooth=0.5,
+                        lambda_mono=lambda_mono, lambda_smooth=lambda_smooth,
                         epochs=epochs, seed=seed)
         r2_mean, r2_min = X.recon_r2(ae, te_df)
         results.append(dict(k=k, recon_r2=r2_mean, recon_r2_min=r2_min))
@@ -243,6 +254,162 @@ def build_heads(ae, tr_trajs, te_trajs, ctx, mu, sd,
         fut_h, _ = X.rollout(ae, tr.h[:c0 + 1], steps, "full_box")
         return fut_h
 
+    # -- damped constant velocity (Theorem 3'): geometric velocity decay,
+    #    gamma fit on TRAIN trajectories only. gamma=1 -> CV, gamma=0 -> persistence.
+    gamma_cand = [0.0, 0.3, 0.5, 0.7, 0.8, 0.9, 0.95, 1.0]
+
+    def _damp_roll(h_hist, steps, gamma):
+        w = min(X.ROLLOUT_VEL_WINDOW, len(h_hist) - 1)
+        if w < 1:
+            v = np.zeros(k)
+        else:
+            recent = h_hist[-w - 1:]
+            tt = np.arange(len(recent))
+            v = np.array([np.polyfit(tt, recent[:, j], 1)[0] for j in range(k)])
+        h0v = h_hist[-1]
+        m = np.arange(1, steps + 1, dtype=float)
+        S = m if gamma >= 1.0 else (1.0 - gamma ** m) / (1.0 - gamma)
+        fut = h0v[None, :] + v[None, :] * S[:, None]
+        return np.clip(fut, 0.0, 1.0)
+
+    H = max(1, int(horizon))
+
+    def _fit_gamma():
+        best_g, best_err = 1.0, np.inf
+        for g in gamma_cand:
+            se, cnt = 0.0, 0
+            for trj in tr_trajs:
+                T = len(trj.x_std)
+                for f in ANCHORS:
+                    c0 = int(f * T)
+                    if c0 < X.ROLLOUT_VEL_WINDOW + 2 or c0 + H >= T:
+                        continue
+                    dec = X.decode(ae, _damp_roll(trj.h[:c0 + 1], H, g))
+                    pred = (dec - mu) / sd
+                    tgt = trj.x_std[c0 + 1:c0 + 1 + H]
+                    se += float(np.sum((pred - tgt) ** 2))
+                    cnt += pred.size
+            err = se / cnt if cnt else np.inf
+            if err < best_err:
+                best_err, best_g = err, g
+        return best_g
+
+    gamma_star = _fit_gamma()
+
+    def cvd_pred(tr, c0, hmax):
+        return (X.decode(ae, _damp_roll(tr.h[:c0 + 1], hmax, gamma_star)) - mu) / sd
+
+    def cvd_lat(tr, c0, steps):
+        return _damp_roll(tr.h[:c0 + 1], steps, gamma_star)
+
+    # -- Holt damped-trend exponential smoothing (same theorem family; alpha
+    #    smooths the level, beta smooths the trend, phi damps -> robust to noise).
+    holt_grid = [(a, b, p) for a in (0.3, 0.6, 0.9)
+                 for b in (0.0, 0.1, 0.3) for p in (0.0, 0.5, 0.8, 1.0)]
+
+    def _holt(h_hist, steps, alpha, beta, phi):
+        L = h_hist[0].astype(float).copy()
+        B = (h_hist[1] - h_hist[0]).astype(float) if len(h_hist) > 1 else np.zeros(k)
+        for t in range(1, len(h_hist)):
+            Lp = L
+            L = alpha * h_hist[t] + (1.0 - alpha) * (L + phi * B)
+            B = beta * (L - Lp) + (1.0 - beta) * phi * B
+        m = np.arange(1, steps + 1, dtype=float)
+        Sphi = np.cumsum(np.ones(steps)) if phi >= 1.0 else np.cumsum(phi ** m)
+        fut = L[None, :] + B[None, :] * Sphi[:, None]
+        return np.clip(fut, 0.0, 1.0)
+
+    def _fit_holt():
+        best, best_err = (0.6, 0.0, 1.0), np.inf
+        for (a, b, p) in holt_grid:
+            se, cnt = 0.0, 0
+            for trj in tr_trajs:
+                T = len(trj.x_std)
+                for f in ANCHORS:
+                    c0 = int(f * T)
+                    if c0 < X.ROLLOUT_VEL_WINDOW + 2 or c0 + H >= T:
+                        continue
+                    dec = X.decode(ae, _holt(trj.h[:c0 + 1], H, a, b, p))
+                    pred = (dec - mu) / sd
+                    tgt = trj.x_std[c0 + 1:c0 + 1 + H]
+                    se += float(np.sum((pred - tgt) ** 2))
+                    cnt += pred.size
+            err = se / cnt if cnt else np.inf
+            if err < best_err:
+                best_err, best = err, (a, b, p)
+        return best
+
+    holt_star = _fit_holt()
+
+    def holt_pred(tr, c0, hmax):
+        return (X.decode(ae, _holt(tr.h[:c0 + 1], hmax, *holt_star)) - mu) / sd
+
+    def holt_lat(tr, c0, steps):
+        return _holt(tr.h[:c0 + 1], steps, *holt_star)
+
+    # -- long-window damped trend: lower-variance velocity (OLS slope over a
+    #    fitted window W) + geometric damping. Still Theorem-3 linear extrapolation.
+    trend_W = [20, 40, 80, 160]
+    trend_g = [0.5, 0.7, 0.85, 0.95, 1.0]
+
+    def _slope(h_hist, W):
+        w = min(W, len(h_hist))
+        recent = h_hist[-w:]
+        if len(recent) < 2:
+            return np.zeros(k)
+        tt = np.arange(len(recent))
+        return np.array([np.polyfit(tt, recent[:, j], 1)[0] for j in range(k)])
+
+    def _trend_roll(h_hist, steps, W, gamma):
+        v = _slope(h_hist, W)
+        h0v = h_hist[-1]
+        m = np.arange(1, steps + 1, dtype=float)
+        S = m if gamma >= 1.0 else (1.0 - gamma ** m) / (1.0 - gamma)
+        return np.clip(h0v[None, :] + v[None, :] * S[:, None], 0.0, 1.0)
+
+    def _fit_trend():
+        best, best_err = (20, 1.0), np.inf
+        for W in trend_W:
+            for g in trend_g:
+                se, cnt = 0.0, 0
+                for trj in tr_trajs:
+                    T = len(trj.x_std)
+                    for f in ANCHORS:
+                        c0 = int(f * T)
+                        if c0 < X.ROLLOUT_VEL_WINDOW + 2 or c0 + H >= T:
+                            continue
+                        dec = X.decode(ae, _trend_roll(trj.h[:c0 + 1], H, W, g))
+                        pred = (dec - mu) / sd
+                        tgt = trj.x_std[c0 + 1:c0 + 1 + H]
+                        se += float(np.sum((pred - tgt) ** 2))
+                        cnt += pred.size
+                err = se / cnt if cnt else np.inf
+                if err < best_err:
+                    best_err, best = err, (W, g)
+        return best
+
+    trend_star = _fit_trend()
+
+    def trend_pred(tr, c0, hmax):
+        return (X.decode(ae, _trend_roll(tr.h[:c0 + 1], hmax, *trend_star)) - mu) / sd
+
+    def trend_lat(tr, c0, steps):
+        return _trend_roll(tr.h[:c0 + 1], steps, *trend_star)
+
+    # -- anchored decoding: yhat = y_c + [D(hhat) - D(h_c)] removes the constant
+    #    reconstruction offset at the forecast origin (Theorem 3 x decoder-Lipschitz).
+    def _anchor_pred(tr, c0, latent_fut):
+        dec = X.decode(ae, latent_fut)
+        dec0 = X.decode(ae, tr.h[c0][None, :])[0]
+        y_c = tr.x_std[c0] * sd + mu
+        return (dec - dec0[None, :] + y_c[None, :] - mu) / sd
+
+    def cvd_anch_pred(tr, c0, hmax):
+        return _anchor_pred(tr, c0, _damp_roll(tr.h[:c0 + 1], hmax, gamma_star))
+
+    def holt_anch_pred(tr, c0, hmax):
+        return _anchor_pred(tr, c0, _holt(tr.h[:c0 + 1], hmax, *holt_star))
+
     # -- sensor-space VAR
     def var_pred(tr, c0, hmax):
         raw = tr.x_std[c0] * sd + mu
@@ -280,6 +447,11 @@ def build_heads(ae, tr_trajs, te_trajs, ctx, mu, sd,
     return {
         "persistence":  dict(pred=pers_pred, lat=None),
         "cv":           dict(pred=cv_pred, lat=cv_lat),
+        "cv_damped":    dict(pred=cvd_pred, lat=cvd_lat, gamma=gamma_star),
+        "holt":         dict(pred=holt_pred, lat=holt_lat, params=holt_star),
+        "trend_lw":     dict(pred=trend_pred, lat=trend_lat, params=trend_star),
+        "cvd_anch":     dict(pred=cvd_anch_pred, lat=cvd_lat),
+        "holt_anch":    dict(pred=holt_anch_pred, lat=holt_lat),
         "var_sensor":   dict(pred=var_pred, lat=None),
         "mlp_noctx":    dict(pred=mlp_nc_pred, lat=mlp_nc_lat,
                              res=r_nc),
@@ -830,7 +1002,8 @@ def run_dataset(name, cfg, args):
     # --- k-sweep ---
     print(f"  [1/5] k-sweep (k=1..{args.kmax}) ...")
     df_k, best_k = k_sweep(tr_df, te_df, feats, cfg["lambda_mono"],
-                           k_max=args.kmax, epochs=args.epochs_sweep, seed=0)
+                           k_max=args.kmax, epochs=args.epochs_sweep, seed=0,
+                           lambda_smooth=args.lambda_smooth)
     print(f"        best k={best_k}  "
           f"recon_r2={df_k.loc[df_k.k==best_k,'recon_r2'].iloc[0]:.3f}")
     df_k.to_csv(os.path.join(out_dir, "ksweep.csv"), index=False)
@@ -838,7 +1011,7 @@ def run_dataset(name, cfg, args):
     # --- train final AE at best k ---
     print(f"  [2/5] training final AE (k={best_k}, {args.epochs_ae} epochs) ...")
     ae = X.train_ae(tr_df, feats, k=best_k, bounded=True,
-                    lambda_mono=cfg["lambda_mono"], lambda_smooth=0.5,
+                    lambda_mono=cfg["lambda_mono"], lambda_smooth=args.lambda_smooth,
                     epochs=args.epochs_ae, seed=0)
     mu, sd = ae["mu"], ae["sd"]
     print(f"        recon_r2={X.recon_r2(ae, te_df)[0]:.3f}")
@@ -881,7 +1054,8 @@ def run_dataset(name, cfg, args):
 
     # --- assemble metrics table ---
     rows = []
-    for lab in ["persistence", "cv", "var_sensor", "mlp_noctx", "mlp_ctx"]:
+    for lab in ["persistence", "cv", "cv_damped", "holt", "trend_lw",
+                "cvd_anch", "holt_anch", "var_sensor", "mlp_noctx", "mlp_ctx"]:
         row = dict(model=lab)
         for h in horizons:
             row[f"skill_h{h}"] = float(np.nanmean(all_skill[lab][h]))
@@ -895,6 +1069,12 @@ def run_dataset(name, cfg, args):
     # --- pick best head ---
     best_head_name = pick_best_head(all_skill, horizons)
     best_head = head_objs[best_head_name]
+    if "cv_damped" in head_objs:
+        print(f"  [info] fitted damping gamma* = {head_objs['cv_damped'].get('gamma')}")
+    if "holt" in head_objs:
+        print(f"  [info] fitted Holt (alpha,beta,phi) = {head_objs['holt'].get('params')}")
+    if "trend_lw" in head_objs:
+        print(f"  [info] fitted trend (W,gamma) = {head_objs['trend_lw'].get('params')}")
     print(f"  [4/5] best head: {best_head_name}")
 
     # --- obs-space metrics ---
@@ -942,6 +1122,8 @@ def main():
                     help="AE epochs for the final best-k model")
     ap.add_argument("--epochs-dyn", type=int, default=200,
                     help="dynamics head training epochs")
+    ap.add_argument("--lambda-smooth", type=float, default=0.5,
+                    help="AE latent smoothness penalty (production C-MAPSS = 2.0)")
     ap.add_argument("--seeds", type=int, nargs="*", default=[0, 1],
                     help="random seeds for MLP heads")
     args = ap.parse_args()

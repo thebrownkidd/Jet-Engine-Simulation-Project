@@ -36,14 +36,14 @@
     | Parameter | Value |
     |---|---|
     | Latent dimension k | **4** (chosen by k-sweep, see Section 3) |
-    | AE epochs | 800 |
+    | AE epochs | 2000 |
     | Dynamics epochs | 400 |
     | Seeds for MLP heads | [0, 1, 2] |
-    | Monotonicity penalty λ_mono | 0.5 |
+    | Monotonicity penalty λ_mono | 1.0 |
     | Smoothness penalty λ_smooth | 0.5 |
-    | Forecast horizons evaluated | [1, 5, 15, 30] (in cycles/steps) |
+    | Forecast horizons evaluated | [1, 10, 30, 60] (in cycles/steps) |
     | Train / test split | 17 / 9 units |
-    | Context columns used | none |
+    | Context columns used | ['ctx_G1', 'ctx_G3', 'ctx_G4', 'ctx_G5', 'ctx_G6', 'ctx_G7', 'ctx_G9'] |
     | Sensors (raw → selected) | 10 → 10 |
     | Denoising window | 15 cycles (causal rolling median) |
     | Sensor selection threshold | trend |corr(sensor,cycle)| ≥ 0.2 |
@@ -62,14 +62,14 @@
       2. The k where incremental variance gain drops below 5%
 
     We take the **more conservative choice** (smaller k). For k=4, the reconstruction
-    R² (mean across sensors) = **0.463** (worst single sensor = -0.433).
+    R² (mean across sensors) = **0.725** (worst single sensor = 0.228).
 
     **Why PCA elbow, not max reconstruction R²?**
     Reconstruction R² always rises with k, so choosing max R² would lead to overfitting
     (using many more latent dimensions than necessary). The PCA elbow method finds the
     "natural" dimensionality of the problem, a much more principled approach.
 
-    **Why λ_mono=0.5?**
+    **Why λ_mono=1.0?**
     The dataset has a degradation trend, so we encourage the primary latent coordinate to increase monotonically with time.  This is the *health progressing toward failure* assumption.
 
     ---
@@ -82,12 +82,12 @@
 
     |   k |   recon_r2 |   recon_r2_min |
 |----:|-----------:|---------------:|
-|   1 |    -0.2468 |        -3.249  |
-|   2 |     0.0054 |        -2.9574 |
-|   3 |     0.196  |        -2.4007 |
-|   4 |     0.4626 |        -0.4332 |
-|   5 |     0.5494 |        -0.1059 |
-|   6 |     0.537  |         0.2278 |
+|   1 |    -0.1279 |        -1.5963 |
+|   2 |     0.4035 |        -1.0822 |
+|   3 |     0.5813 |        -0.2705 |
+|   4 |     0.7249 |         0.2284 |
+|   5 |     0.7298 |         0.1968 |
+|   6 |     0.7613 |         0.3053 |
 
     A higher recon_r2 means the compressed representation is more faithful.
     Diminishing returns usually set in around k=3–5; we pick the elbow point
@@ -113,19 +113,24 @@
     **bounded** = True means the growth stayed below the threshold of
     5.0×, which we define as "bounded" for reporting.
 
-    | model       |   skill_h1 |   nrmse_h1 |   skill_h5 |   nrmse_h5 |   skill_h15 |   nrmse_h15 |   skill_h30 |   nrmse_h30 |   freerun_growth | bounded   |
-|:------------|-----------:|-----------:|-----------:|-----------:|------------:|------------:|------------:|------------:|-----------------:|:----------|
-| persistence |     0      |     0.0153 |     0      |     0.0477 |      0      |      0.0696 |      0      |      0.4827 |           1      | True      |
-| cv          | -1034.1    |     0.4908 |  -113.101  |     0.5098 |    -58.5205 |      0.5368 |     -1.3435 |      0.739  |           1.1813 | True      |
-| var_sensor  |   -65.5349 |     0.1244 |   -36.5365 |     0.2924 |    -44.7368 |      0.4706 |     -0.686  |      0.6268 |           1.0145 | True      |
-| mlp_noctx   |  -950.28   |     0.4705 |   -92.6013 |     0.4616 |    -59.0433 |      0.5388 |     -1.2057 |      0.7169 |           0.6127 | True      |
-| mlp_ctx     |  -950.28   |     0.4705 |   -92.6013 |     0.4616 |    -59.0433 |      0.5388 |     -1.2057 |      0.7169 |           0.6127 | True      |
+    | model       |   skill_h1 |   nrmse_h1 |   skill_h10 |   nrmse_h10 |   skill_h30 |   nrmse_h30 |   skill_h60 |   nrmse_h60 |   freerun_growth | bounded   |
+|:------------|-----------:|-----------:|------------:|------------:|------------:|------------:|------------:|------------:|-----------------:|:----------|
+| persistence |     0      |     0.0122 |      0      |      0.0737 |      0      |      0.1059 |      0      |      0.1742 |           1      | True      |
+| cv          |  -610.778  |     0.3027 |    -15.8394 |      0.3024 |     -9.0561 |      0.3358 |     -4.2335 |      0.3985 |           1.2711 | True      |
+| cv_damped   |  -610.778  |     0.3027 |    -15.1882 |      0.2965 |     -7.8908 |      0.3158 |     -2.8045 |      0.3398 |           1      | True      |
+| holt        |  -602.634  |     0.3007 |    -15.0608 |      0.2953 |     -7.9039 |      0.316  |     -2.8515 |      0.3419 |           1.002  | True      |
+| trend_lw    |  -610.419  |     0.3026 |    -15.2084 |      0.2966 |     -7.8604 |      0.3152 |     -2.7727 |      0.3384 |           1.0023 | True      |
+| cvd_anch    |     0.0476 |     0.0119 |      0.0059 |      0.0735 |      0.0447 |      0.1035 |      0.0359 |      0.1711 |           1      | True      |
+| holt_anch   |    -0.8748 |     0.0168 |     -0.0874 |      0.0768 |     -0.0751 |      0.1098 |     -0.0506 |      0.1786 |           1.0018 | True      |
+| var_sensor  |   -29.8433 |     0.068  |     -7.4395 |      0.2141 |     -6.721  |      0.2943 |     -3.6469 |      0.3755 |           0.9226 | True      |
+| mlp_noctx   |  -550.969  |     0.2875 |     -7.2723 |      0.211  |     -7.1702 |      0.3022 |     -5.6951 |      0.4505 |           0.5846 | True      |
+| mlp_ctx     |  -610.746  |     0.3026 |    -19.4041 |      0.3307 |    -17.7603 |      0.4564 |    -12.855  |      0.6471 |           0.6343 | True      |
 
-    **Winner:** `persistence` (highest mean skill at horizons [5, 15, 30]).
+    **Winner:** `cvd_anch` (highest mean skill at horizons [10, 30, 60]).
 
     ---
 
-    ## 5. Observation-space accuracy (best head: `persistence`)
+    ## 5. Observation-space accuracy (best head: `cvd_anch`)
 
     This table shows the per-sensor forecast accuracy in the **original feature
     scale** (regime-normalized z-scores or raw feature units depending on the
@@ -136,20 +141,20 @@
     **r2**: coefficient of determination; 1.0 = perfect, 0 = no better than the
     mean, negative = worse than the mean.
 
-    Values are averaged over all forecast horizons ([1, 5, 15, 30]).
+    Values are averaged over all forecast horizons ([1, 10, 30, 60]).
 
-    | sensor         |     rmse |     r2 |
-|:---------------|---------:|-------:|
-| capacity       |   0.1024 | 0.7285 |
-| discharge_time | 289.656  | 0.5793 |
-| i_mean         |   0.0595 | 0.9413 |
-| knee_time      | 330.058  | 0.7149 |
-| t_max          |   0.4876 | 0.9988 |
-| t_mean         |   0.3445 | 0.999  |
-| v_end          |   0.0617 | 0.5398 |
-| v_mean         |   0.0417 | 0.8634 |
-| v_min          |   0.0179 | 0.9955 |
-| v_start        |   0.0015 | 0.9584 |
+    | sensor         |   rmse |      r2 |
+|:---------------|-------:|--------:|
+| capacity       | 0.156  | -3.5827 |
+| discharge_time | 0.0767 | -3.8435 |
+| i_mean         | 0.0612 |  0.31   |
+| knee_time      | 0.0904 |  0.552  |
+| t_max          | 0.0852 |  0.9497 |
+| t_mean         | 0.1242 |  0.4331 |
+| v_end          | 0.0507 | -2.2811 |
+| v_mean         | 0.0584 |  0.7371 |
+| v_min          | 0.0679 |  0.99   |
+| v_start        | 0.0673 |  0.9301 |
 
     ---
 
@@ -178,7 +183,7 @@
 
     ![Forecast figure](forecast_plot.png)
 
-    This figure shows the **predictions** made by the best-head model (`persistence`)
+    This figure shows the **predictions** made by the best-head model (`cvd_anch`)
     starting from a mid-to-late point through the trajectory of the longest test unit.
 
     | Element | What it means |
@@ -195,7 +200,7 @@
 
     ---
 
-    ## 7. Observation-space accuracy (best head: `persistence`)
+    ## 7. Observation-space accuracy (best head: `cvd_anch`)
 
     This table shows the per-sensor forecast accuracy in the **original feature
     scale** (regime-normalized z-scores or raw feature units depending on the
@@ -206,31 +211,32 @@
     **r2**: coefficient of determination; 1.0 = perfect, 0 = no better than the
     mean, negative = worse than the mean.
 
-    Values are averaged over all forecast horizons ([1, 5, 15, 30]).
+    Values are averaged over all forecast horizons ([1, 10, 30, 60]).
 
-    | sensor         |     rmse |     r2 |
-|:---------------|---------:|-------:|
-| capacity       |   0.1024 | 0.7285 |
-| discharge_time | 289.656  | 0.5793 |
-| i_mean         |   0.0595 | 0.9413 |
-| knee_time      | 330.058  | 0.7149 |
-| t_max          |   0.4876 | 0.9988 |
-| t_mean         |   0.3445 | 0.999  |
-| v_end          |   0.0617 | 0.5398 |
-| v_mean         |   0.0417 | 0.8634 |
-| v_min          |   0.0179 | 0.9955 |
-| v_start        |   0.0015 | 0.9584 |
+    | sensor         |   rmse |      r2 |
+|:---------------|-------:|--------:|
+| capacity       | 0.156  | -3.5827 |
+| discharge_time | 0.0767 | -3.8435 |
+| i_mean         | 0.0612 |  0.31   |
+| knee_time      | 0.0904 |  0.552  |
+| t_max          | 0.0852 |  0.9497 |
+| t_mean         | 0.1242 |  0.4331 |
+| v_end          | 0.0507 | -2.2811 |
+| v_mean         | 0.0584 |  0.7371 |
+| v_min          | 0.0679 |  0.99   |
+| v_start        | 0.0673 |  0.9301 |
 
     ---
 
     ## 8. Honest summary
 
     ### What worked
-    - Reconstruction R² at the chosen k = **0.463**.
+    - Reconstruction R² at the chosen k = **0.725**.
+- Best head (`cvd_anch`) achieves positive forecast skill at h=10: **+0.006** (beats persistence).
 - The best-head free-run forecast stays bounded (growth = 1.00×).
 
     ### What did not work / limitations
-    - **Constant-velocity rollout** (old method) performs poorly at h=5 (skill -113.101), confirming it is the weakest link.
+    - **Constant-velocity rollout** (old method) performs poorly at h=10 (skill -15.839), confirming it is the weakest link.
 
     ---
 

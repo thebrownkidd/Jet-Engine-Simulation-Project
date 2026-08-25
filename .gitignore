@@ -43,3 +43,5 @@ data_cache.pt
 results/models/
 .venv
 .github
+# Exploratory work-in-progress (not part of the anchored-decoding commit)
+wip/

@@ -42,7 +42,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 MAT_DIR = os.path.join(ROOT, "data", "raw_battery", "Battery_DataSet",
                        "Battery_DataSet")
+META_CSV = os.path.join(ROOT, "data", "raw_battery", "metadata.csv")
 OUT_CSV = os.path.join(ROOT, "data", "processed", "battery_features.csv")
+
+MIN_STD = 1e-4
 
 
 def _f(x) -> np.ndarray:
@@ -98,6 +101,57 @@ def process_battery(mat_path: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _load_conditions() -> dict:
+    """Map battery_id -> operating-condition group from metadata.csv."""
+    if not os.path.exists(META_CSV):
+        return {}
+    meta = pd.read_csv(META_CSV)
+    if "battery_id" not in meta or "group" not in meta:
+        return {}
+    return dict(zip(meta["battery_id"].astype(str), meta["group"].astype(str)))
+
+
+def condition_normalize(out: pd.DataFrame, feat_cols: list, cond_map: dict):
+    """Per-operating-condition normalization (mirrors the C-MAPSS regime step).
+
+    Batteries in the same group share ambient temperature and discharge protocol,
+    so the group is the operating condition. Subtract per-condition mean and divide
+    by pooled within-condition std to remove the condition offset, leaving the
+    degradation residual. Near-constant features are dropped.
+    """
+    cond = out["unit_id"].map(lambda u: cond_map.get(str(u), "G0")).to_numpy()
+    conds = sorted(np.unique(cond).tolist())
+    n_cond = len(conds)
+
+    good = []
+    for f in feat_cols:
+        vals = out[f].to_numpy().astype(float)
+        pooled_var, total = 0.0, 0
+        for c in conds:
+            mask = cond == c
+            if mask.sum() < 2:
+                continue
+            v = vals[mask]
+            pooled_var += (v - v.mean()).var() * mask.sum()
+            total += int(mask.sum())
+        pooled_std = float(np.sqrt(pooled_var / max(total - n_cond, 1)))
+        if pooled_std < MIN_STD:
+            continue
+        normed = vals.copy()
+        for c in conds:
+            mask = cond == c
+            if mask.sum() < 1:
+                continue
+            normed[mask] = (normed[mask] - vals[mask].mean()) / pooled_std
+        out[f] = normed
+        good.append(f)
+
+    for c in conds:
+        out[f"ctx_{c}"] = (cond == c).astype(float)
+    ctx_cols = [f"ctx_{c}" for c in conds]
+    return out, good, ctx_cols, n_cond
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--min-cycles", type=int, default=30,
@@ -130,13 +184,18 @@ def main():
 
     out = pd.concat(parts, ignore_index=True)
     feat_cols = [c for c in out.columns if c not in ("unit_id", "cycle")]
-    out = out[["unit_id", "cycle"] + feat_cols].sort_values(
+
+    # Regime (operating-condition) identification + per-condition normalization.
+    cond_map = _load_conditions()
+    out, feat_cols, ctx_cols, n_cond = condition_normalize(out, feat_cols, cond_map)
+
+    out = out[["unit_id", "cycle"] + feat_cols + ctx_cols].sort_values(
         ["unit_id", "cycle"]).reset_index(drop=True)
     os.makedirs(os.path.dirname(OUT_CSV), exist_ok=True)
     out.to_csv(OUT_CSV, index=False)
     print("=" * 60)
     print(f"units: {out['unit_id'].nunique()}  rows: {len(out)}  "
-          f"features: {len(feat_cols)}")
+          f"features: {len(feat_cols)}  conditions: {n_cond}  ctx: {len(ctx_cols)}")
     print(f"wrote -> {OUT_CSV}")
 
 
