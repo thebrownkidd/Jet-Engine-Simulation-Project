@@ -1,0 +1,1071 @@
+\documentclass[a4paper,fleqn]{cas-sc}
+
+\usepackage[authoryear,longnamesfirst]{natbib}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{subcaption}
+\usepackage{siunitx}
+\usepackage{longtable}
+\usepackage{xcolor}
+\usepackage{lineno}
+\usepackage[ruled,vlined]{algorithm2e}
+
+% ============================================================
+% Theorem environments
+% ============================================================
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+
+% ============================================================
+% Compact float/table controls
+% ============================================================
+\renewcommand{\topfraction}{0.90}
+\renewcommand{\bottomfraction}{0.80}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.75}
+\setcounter{topnumber}{2}
+\setcounter{bottomnumber}{1}
+\setcounter{totalnumber}{4}
+
+\newcommand{\figsmall}{0.58\textwidth}
+\newcommand{\figmedium}{0.68\textwidth}
+\newcommand{\figlarge}{0.78\textwidth}
+\newcommand{\figwide}{0.84\textwidth}
+\newcommand{\figappendix}{0.78\textwidth}
+
+\newcommand{\tablefont}{\small}
+\newcommand{\tighttables}{%
+  \setlength{\tabcolsep}{4.5pt}%
+  \renewcommand{\arraystretch}{1.08}%
+}
+
+\newcommand{\tinytable}{\scriptsize}
+\newcommand{\verytighttables}{%
+  \setlength{\tabcolsep}{3.5pt}%
+  \renewcommand{\arraystretch}{1.05}%
+}
+
+% ============================================================
+% Macros
+% ============================================================
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\h}{\mathbf{h}}
+\newcommand{\uvar}{\mathbf{u}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\Hspace}{\mathcal{H}}
+\newcommand{\Zspace}{\mathcal{Z}}
+\newcommand{\Sset}{\mathcal{S}}
+\newcommand{\Lrec}{\mathcal{L}_{\mathrm{rec}}}
+\newcommand{\Lmono}{\mathcal{L}_{\mathrm{mono}}}
+\newcommand{\Lsmooth}{\mathcal{L}_{\mathrm{smooth}}}
+
+% Artifact roots
+\newcommand{\artifactroot}{paper_artifacts/acml_results_bundle}
+\newcommand{\mainfig}{\artifactroot/main/figures}
+\newcommand{\maintab}{\artifactroot/main/tables}
+\newcommand{\appfig}{\artifactroot/appendix/figures}
+\newcommand{\apptab}{\artifactroot/appendix/tables}
+\newcommand{\resultsfig}{results/figures}
+\newcommand{\resultstab}{results/tables}
+
+\begin{document}
+
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+% ============================================================
+% Front matter
+% ============================================================
+\shorttitle{Learning Bounded Latent Degradation Dynamics}
+\shortauthors{A. Goel}
+
+\title[mode=title]{Learning Bounded Latent Degradation Dynamics for stable rollout and Remaining Useful Life Prediction}
+
+\author[1]{Arpit Goel}
+\cormark[1]
+\ead{arpit@thebrownkid.in}
+
+\affiliation[1]{organization={TwinSim Labs}}
+
+\cortext[1]{Corresponding author}
+
+\begin{abstract}
+Long-horizon multivariate time-series forecasting is often unstable when models
+are recursively rolled out in observation space. This problem is especially
+pronounced in degradation modelling, where sensor trajectories are noisy,
+regime-dependent, and only partially informative about latent health. We study
+whether low-dimensional bounded latent representations can act as dynamical
+regularizers for stable rollout. The proposed algorithm identifies operating
+regimes from control variables, normalizes sensor measurements within regimes,
+denoises the resulting trajectories, selects degradation-sensitive channels,
+and trains a bounded latent autoencoder with monotonicity and smoothness
+regularization on a primary health coordinate. We provide a theoretical
+analysis separating sensor-space closed-loop divergence, bounded latent
+rollout, and smoothness-controlled forecastability. Experiments on NASA
+C-MAPSS show that higher-dimensional latent spaces can improve reconstruction
+while weakening rollout stability. Ablations further show that finite-horizon
+decoded boundedness is not unique to the bounded latent model: an unbounded
+autoencoder may also remain numerically bounded under constant-velocity
+rollout because of small latent velocities and decoder saturation. The main
+empirical advantage of the proposed representation is therefore forecastability:
+lower latent curvature, higher forecast skill, and useful downstream
+remaining-useful-life prediction.
+\end{abstract}
+
+\begin{keywords}
+stable forecasting \sep latent representation learning \sep multivariate time series \sep autoencoders \sep degradation modelling \sep remaining useful life
+\end{keywords}
+
+\maketitle
+
+\section{Introduction}
+% ============================================================
+
+Many multivariate time-series applications require models that remain useful
+when rolled forward beyond a one-step training objective. In degradation
+modelling and prognostics, this requirement is especially important: forecasts
+are used not only to interpolate observed measurements, but also to reason
+about future system health. A model that reconstructs historical trajectories
+accurately may still produce implausible or unstable behavior when recursively
+rolled out.
+
+Raw sensor measurements mix several sources of variation. Measurements change
+with operating conditions, sensor noise, unit-specific behavior, and latent
+degradation. Directly forecasting in observation space can therefore lead to
+unstable dynamics. Linear autoregressive models may become non-contractive
+when their closed-loop transition operators have spectral radius greater than
+one \citep{hamilton1994time,lutkepohl2005new}, while high-capacity sequence
+models may achieve good short-horizon accuracy without guaranteeing stable
+free-run behavior, a difficulty long documented for recurrent architectures
+trained via backpropagation through time \citep{pascanu2013difficulty}.
+
+This paper studies an algorithmic alternative. Instead of forecasting raw
+sensors directly, we learn a compact latent state intended to represent
+degradation after removing operating-regime effects. The latent state is
+bounded by construction and is regularized so that its primary coordinate
+evolves smoothly and approximately monotonically over the life of each unit.
+Forecasting is then performed by local constant-velocity rollout in latent
+space, followed by decoding back to the sensor representation.
+
+The key thesis is that stable long-horizon forecasting requires more than
+accurate reconstruction. Bounded latent geometry constrains the admissible state
+space, while smooth low-curvature latent dynamics make motion within that
+space forecastable. These are distinct mechanisms: boundedness alone is not
+sufficient for useful forecasting, and short-horizon accuracy does not ensure
+stable free-run behavior.
+
+The main contributions are:
+\begin{itemize}
+    \item We propose a regime-aware latent representation learning algorithm for
+    multivariate degradation time series, combining condition normalization,
+    denoising, dynamic sensor selection, and bounded latent autoencoding.
+
+    \item We provide a theoretical analysis separating sensor-space
+    closed-loop divergence, bounded latent rollout, and smoothness-controlled
+    latent forecastability.
+
+    \item We show empirically that boundedness alone is insufficient: an
+    unbounded latent autoencoder can remain finite over practical horizons,
+    but exhibits higher latent curvature and weaker forecast skill.
+
+    \item We demonstrate that increasing latent dimension improves
+    reconstruction but can weaken rollout stability, supporting
+    low-dimensional latent manifolds as dynamical regularizers.
+
+    \item We compare against VAR, VAR(2), GRU, LSTM, and TCN baselines, showing
+    that closed-loop sensor-space and neural sequence forecasters can exhibit
+    inconsistent free-run stability.
+\end{itemize}
+
+% ============================================================
+\section{Related Work}
+\label{sec:related}
+% ============================================================
+
+\subsection{RUL Prediction and Health Indicators}
+
+Remaining useful life (RUL) estimation is a central task in prognostics and
+health management, where the goal is to infer the remaining time before a
+system reaches end of useful life from condition-monitoring data
+\citep{si2011remaining}. NASA C-MAPSS is a standard benchmark for this setting:
+it provides run-to-failure multivariate time series, operating settings,
+sensor noise, official train/test splits, and test RUL labels
+\citep{nasa_cmapss,saxena2008turbofan,saxena2008damage}. The four subsets FD001--FD004 vary in
+operating-condition complexity and fault-mode multiplicity.
+
+Classical health-indicator construction emphasizes properties such as
+monotonicity, trendability, and prognosability
+\citep{coble2009identifying}. These criteria motivate representations that move
+consistently with degradation and can be extrapolated toward failure. More
+recent work explicitly builds monotonicity and other domain constraints into
+the learning objective for data-driven health indicators, closer in spirit to
+the regularization used here \citep{tefera2025constraint}. Our work
+adopts this health-indicator perspective but learns the health state as a
+latent coordinate rather than hand-engineering it from individual sensors.
+
+\subsection{Deep Learning for Multivariate Prognostics}
+
+Deep learning methods have been widely used for RUL prediction from
+multivariate sensor windows. Convolutional models learn local temporal features
+\citep{babu2016deep,li2018deepcnn}, while recurrent architectures such as LSTMs
+and GRUs model sequential dependencies
+\citep{zheng2017lstm,hochreiter1997lstm,cho2014gru}. Temporal convolutional
+networks provide a strong generic sequence-modelling baseline with causal
+dilated convolutions and residual connections \citep{bai2018tcn}. Attention
+mechanisms have also been layered onto recurrent and convolutional backbones
+for RUL estimation, including feature-attention LSTMs
+\citep{liu2021featureattention}, attention-augmented LSTMs for rotating
+machinery \citep{zhang2020attentionlstm}, and bidirectional GRUs with temporal
+self-attention \citep{zhang2022bigru}. Recent C-MAPSS RUL models include
+CNN-LSTM-Attention \citep{deng2024cnnlstmattention}
+and Transformer--TCN--Self-Attention feature fusion \citep{li2025ttsnet}.
+
+However, supervised RUL accuracy and stable free-run forecasting are different
+objectives. A sequence model can be accurate over a short horizon or under
+teacher forcing while becoming unstable when recursively rolled forward. In
+this paper, GRU, LSTM, and TCN models are treated as forecasting baselines for
+testing free-run stability rather than as direct replacements for the proposed
+latent representation.
+
+\subsection{Autoencoders and Latent Dynamics}
+
+Autoencoders are commonly used to learn compact representations of
+high-dimensional signals. Denoising autoencoders learn features robust to input
+corruption \citep{vincent2008dae}, and variational autoencoders introduce
+probabilistic latent variables via amortized stochastic inference
+\citep{kingma2014autoencoding,rezende2014stochastic}. In prognostics,
+autoencoder representations are often used as features for downstream health
+or RUL prediction.
+
+Latent dynamics methods similarly separate high-dimensional observations from
+lower-dimensional evolution. This perspective traces back to classical operator
+theory, in which a nonlinear dynamical system is represented through the
+linear evolution of observables in an infinite-dimensional function space
+\citep{koopman1931hamiltonian}. Koopman autoencoders operationalize this idea
+with finite-dimensional learned embeddings in which nonlinear dynamics are
+approximated by linear evolution
+\citep{lusch2018deep,erichson2020forecasting}. Latent Space Dynamics
+Identification combines autoencoder compression with learned latent dynamics
+for reduced-order rollout \citep{fries2022lasdi}, with subsequent work adding
+Gaussian-process uncertainty over the latent dynamics
+\citep{bonneville2024gplasdi}. Our work shares the broad
+principle of forecasting in latent space, but focuses on how bounded
+low-dimensional geometry and latent smoothness affect free-run stability and
+forecastability in degradation time series.
+
+\subsection{Position of This Work}
+
+The contribution of this paper is not a new autoencoder architecture alone.
+Rather, we study bounded latent manifolds as dynamical regularizers. The
+experiments explicitly separate reconstruction, boundedness, curvature,
+forecast skill, and downstream RUL. This distinction is important because a
+model may reconstruct well but forecast poorly, and a model may remain
+numerically bounded over finite horizons without learning a useful degradation
+trajectory.
+
+% ============================================================
+\section{Method}
+\label{sec:method}
+% ============================================================
+
+\subsection{Problem Setup}
+
+Let $\x_{i,t}\in\R^p$ denote the sensor vector for unit $i$ at cycle $t$, and
+let $\uvar_{i,t}\in\R^q$ denote the corresponding operating variables. The goal
+is to learn a low-dimensional latent state $\h_{i,t}\in\R^K$, with $K\ll p$,
+that captures degradation-relevant dynamics and supports stable long-horizon
+rollout.
+
+The workflow is summarized in Fig.~\ref{fig:pipeline}. It first removes
+nuisance variation caused by operating conditions and static sensors, then
+learns a compact latent state whose geometry is suitable for free-run
+forecasting.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figlarge,height=0.38\textheight,keepaspectratio]{\mainfig/fig_pipeline.png}
+    \caption{Regime-aware bounded latent manifold learning.}
+    \label{fig:pipeline}
+\end{figure}
+
+\begin{algorithm}[t]
+\caption{Bounded Latent Degradation Manifold Learning}
+\label{alg:manifold}
+\KwIn{Trajectories $\{\x_{i,t},\uvar_{i,t}\}$ and latent dimension $K$}
+\KwOut{Bounded latent state $\h_{i,t}$, rollout $\hat{\h}_{i,t+\tau}$, and RUL features}
+Fit operating-regime map $r_{i,t}=C(\uvar_{i,t})$ using control variables only\;
+Estimate regime-specific statistics and compute normalized residuals\;
+Denoise residual trajectories using a rolling median\;
+Select dynamic sensors using degradation-trend scores\;
+Train bounded autoencoder
+$\h_{i,t}=E_\theta(\y_{i,t})\in[0,1]^K$,
+$\hat{\y}_{i,t}=D_\phi(\h_{i,t})$\;
+Penalize reconstruction error, negative increments of $h_0$, and roughness of $h_0$\;
+Estimate local latent velocity and roll out
+$\hat{\h}_{t+\tau}=\Pi_{[0,1]^K}(\h_t+\tau\hat{\mathbf v}_t)$\;
+Decode $\hat{\h}_{t+\tau}$ or use $[\h,\dot{\h}]$ for RUL prediction\;
+\end{algorithm}
+
+\subsection{Regime Identification and Normalization}
+
+Operating conditions can dominate raw sensor variation. We therefore identify
+discrete regimes using only the operating variables. A clustering function $C$
+assigns each observation to a regime, $r_{i,t}=C(\uvar_{i,t})$. In the
+implementation, $C$ is a K-means model fit on the three operating settings.
+Sensors are not used to form regimes, preventing degradation-sensitive
+measurements from influencing the operating-condition partition.
+
+For each regime $r$ and sensor $j$, we estimate a regime-specific mean
+$\mu_{r,j}$ and scale $\sigma_{r,j}$. The normalized residual is
+\[
+    \tilde{x}_{i,t,j}
+    =
+    \frac{x_{i,t,j}-\mu_{r_{i,t},j}}
+    {\sigma_{r_{i,t},j}+\epsilon}.
+\]
+This removes operating-regime offsets and yields trajectories more likely to
+reflect degradation.
+
+\subsection{Denoising and Dynamic Sensor Selection}
+
+The normalized trajectories are denoised independently for each unit using a
+rolling median,
+\[
+    \bar{x}_{i,t,j}
+    =
+    \operatorname{median}_{\tau\in W(t)}
+    \tilde{x}_{i,\tau,j}.
+\]
+This suppresses local spikes while preserving slowly varying degradation
+trends.
+
+Not every sensor channel is degradation-informative. For each denoised sensor
+$j$, we compute
+\[
+    S_j
+    =
+    \frac{1}{N}
+    \sum_i
+    \left|
+    \operatorname{corr}(\bar{x}_{i,:,j},t)
+    \right|.
+\]
+The selected dynamic sensor set is $\Sset=\{j:S_j\geq\gamma\}$, and the
+autoencoder input is $\y_{i,t}=\bar{\x}_{i,t,\Sset}$. Thus the autoencoder is
+not asked to spend capacity reconstructing static or purely
+operating-condition channels.
+
+\subsection{Bounded Latent Autoencoder}
+
+The encoder maps the selected denoised sensor vector to a bounded latent state:
+\[
+    \h_{i,t}=E_\theta(\y_{i,t})\in[0,1]^K,
+    \qquad
+    \hat{\y}_{i,t}=D_\phi(\h_{i,t}).
+\]
+The objective is
+\[
+    \mathcal{L}
+    =
+    \Lrec+\lambda_m\Lmono+\lambda_s\Lsmooth,
+    \qquad
+    \Lrec=\sum_{i,t}\|\hat{\y}_{i,t}-\y_{i,t}\|_2^2.
+\]
+The monotonicity and smoothness penalties are applied to the primary latent
+coordinate $h_0$:
+\[
+    \Lmono
+    =
+    \sum_{i,t}
+    \max(0,-\Delta h_{i,t,0}),
+    \qquad
+    \Lsmooth
+    =
+    \sum_{i,t}
+    (\Delta h_{i,t,0})^2,
+\]
+where $\Delta h_{i,t,0}=h_{i,t+1,0}-h_{i,t,0}$. After training, $h_0$ is
+oriented so that it increases with cycle index. The smoothness penalty follows
+the broader principle, used in physics-informed and constraint-regularized
+learning, of penalizing a differential-operator norm of the model output to
+encourage solutions that are physically or dynamically plausible rather than
+merely low-error on observed points \citep{raissi2019physics}.
+
+\subsection{Latent Rollout and RUL Features}
+
+Forecasting is performed in latent space. A local velocity
+$\hat{\mathbf{v}}_t$ is estimated over a trailing window, and future latent
+states are predicted as
+\[
+    \hat{\h}_{t+\tau}
+    =
+    \Pi_{\Hspace}
+    \left(
+    \h_t+\tau\hat{\mathbf{v}}_t
+    \right),
+    \qquad
+    \Hspace=[0,1]^K .
+\]
+The decoded forecast is $\hat{\y}_{t+\tau}=D_\phi(\hat{\h}_{t+\tau})$.
+All bounded-rollout results use full-vector projection, matching the
+compact-domain assumption in Theorem~\ref{thm:bounded-rollout}. A legacy
+$h_0$-only clipping rule was also tested and produced materially similar
+metrics.
+
+For RUL prediction, the downstream regressor uses all latent coordinates and
+their local velocities:
+\[
+    [h_0,\ldots,h_{K-1},v_0,\ldots,v_{K-1}].
+\]
+This avoids confounding the latent-dimension study by discarding coordinates
+beyond $h_1$.
+
+\subsection{Ablation Variants}
+
+The comparative study evaluates the full model and controlled variants: no
+regime normalization, no monotonicity penalty, no smoothness penalty, no
+monotonicity or smoothness, bounded latent autoencoder without penalties, and
+an unbounded latent autoencoder. These variants isolate which parts of the
+algorithm affect reconstruction, finite-horizon boundedness, latent curvature,
+forecast skill, and downstream RUL.
+
+% ============================================================
+\section{Theory}
+\label{sec:theory}
+% ============================================================
+
+This section separates three mechanisms: sensor-space closed-loop instability,
+bounded latent rollout, and smoothness-controlled forecastability. The sensor-space
+analysis follows standard linear time-series and system-identification theory
+\citep{hamilton1994time,lutkepohl2005new,ljung1999system}, while the latent-space
+boundedness guarantee relies on elementary point-set topology
+\citep{munkres2000topology}.
+
+\subsection{Sensor-Space Closed-Loop Instability}
+
+Consider a vector autoregression in standardized sensor space:
+\[
+    \z_{t+1}=\sum_{\ell=1}^{p}A_\ell \z_{t+1-\ell}+b .
+\]
+With stacked state $\xi_t=[\z_t^\top,\z_{t-1}^\top,\ldots]^\top$, the
+closed-loop rollout is $\xi_{t+1}=C\xi_t+\tilde{b}$, where $C$ is the
+companion matrix.
+
+\begin{theorem}[Non-contractive linear rollout]
+\label{thm:linear-growth}
+If $\rho(C)>1$, where $\rho(C)$ is the spectral radius of the companion matrix,
+then the closed-loop rollout is non-contractive. For generic initial errors
+with nonzero projection onto the dominant eigenspace, free-running error grows
+geometrically at a rate governed by $\rho(C)$.
+\end{theorem}
+
+\begin{proof}
+Let $e_t$ be the stacked forecast error. Then $e_{t+1}=Ce_t+r_t$, where $r_t$
+is the one-step residual. Iterating gives
+\[
+    e_t=C^te_0+\sum_{s=0}^{t-1}C^sr_{t-1-s}.
+\]
+By Gelfand's formula, $\lim_{t\to\infty}\|C^t\|^{1/t}=\rho(C)$. If
+$\rho(C)>1$, the homogeneous component grows geometrically for generic initial
+errors with nonzero dominant-eigenspace projection.
+\end{proof}
+
+\subsection{Bounded Latent Rollout}
+
+Let the latent forecast be
+$\hat{\h}_{c+\tau}=\Pi_{\Hspace}(\h_c+\tau\nu_c)$, where
+$\Hspace\subset\R^K$ is compact.
+
+\begin{theorem}[Bounded latent rollout]
+\label{thm:bounded-rollout}
+If $\hat{\h}_{c+\tau}\in\Hspace$ for all $\tau\geq0$ and the decoder
+$D_\phi$ is continuous on $\Hspace$, then $D_\phi(\hat{\h}_{c+\tau})$ is
+uniformly bounded for all horizons.
+\end{theorem}
+
+\begin{proof}
+Because $\Hspace$ is compact and $D_\phi$ is continuous, the image
+$D_\phi(\Hspace)$ is compact \citep{munkres2000topology}. Compact subsets of finite-dimensional Euclidean
+space are bounded, so the decoded rollout is uniformly bounded.
+\end{proof}
+
+\begin{corollary}[Boundedness is architectural]
+The boundedness guarantee depends on projection into a compact latent domain
+and decoder continuity. It does not depend on the monotonicity or smoothness
+penalty weights.
+\end{corollary}
+
+This guarantee is a formal statement about the bounded latent model. It does
+not imply that every unbounded latent model must diverge over a finite horizon:
+finite-horizon decoded boundedness can also occur because of small
+extrapolation velocities or saturating nonlinearities.
+
+\subsection{Smoothness and Forecastability}
+
+\begin{theorem}[Constant-velocity forecast error]
+\label{thm:smooth-forecast}
+Let $h_t$ be a scalar latent coordinate with bounded second difference
+$|\Delta^2h_t|=|h_{t+1}-2h_t+h_{t-1}|\leq \kappa$. For the
+constant-velocity forecast
+$\hat{h}_{c+\tau}=h_c+\tau(h_c-h_{c-1})$, the error satisfies
+\[
+    |h_{c+\tau}-\hat{h}_{c+\tau}|
+    \leq
+    \frac{\kappa}{2}\tau(\tau+1).
+\]
+\end{theorem}
+
+\begin{proof}
+Let $\delta_s=h_{c+s}-h_{c+s-1}$. Then
+\[
+    h_{c+\tau}-\hat{h}_{c+\tau}
+    =
+    \sum_{s=1}^{\tau}(\delta_s-\delta_0).
+\]
+Since $|\Delta^2h_t|\leq\kappa$, we have
+$|\delta_s-\delta_0|\leq s\kappa$. Summing over $s=1,\ldots,\tau$ gives the
+bound.
+\end{proof}
+
+Thus smoothness does not create boundedness; it reduces the curvature constant
+that controls constant-velocity forecast error. The same qualitative point ---
+that a bounded second difference controls extrapolation error over a finite
+horizon --- underlies classical forecasting practice for stochastic processes
+more generally \citep{brockwell2016introduction}.
+
+\subsection{Latent Dimension as Dynamical Regularization}
+
+\begin{proposition}[Capacity-stability tradeoff]
+\label{prop:k-regularization}
+Increasing latent dimension $K$ weakly increases reconstruction capacity,
+because lower-dimensional representations can be embedded in higher-dimensional
+ones. At the same time, it increases the number of independent latent
+directions available for rollout. Therefore, larger $K$ can improve
+reconstruction while weakening dynamical regularization.
+\end{proposition}
+
+The $K$-aware dimension sweep tests this proposition using all latent
+coordinates and velocities downstream.
+
+% ============================================================
+\section{Experimental Setup}
+\label{sec:experimental}
+% ============================================================
+
+\subsection{Datasets and Protocol}
+
+We evaluate the algorithm on the NASA C-MAPSS turbofan degradation benchmark
+\citep{nasa_cmapss,saxena2008turbofan,saxena2008damage}. The benchmark consists of four
+run-to-failure subsets, FD001--FD004. Each engine trajectory starts from an
+unknown initial wear state, operates normally at the beginning, develops a
+fault, and is observed until failure in the training split. The test split is
+truncated prior to failure and is accompanied by official RUL labels.
+
+\begin{table}[t]
+\centering
+\caption{Characteristics of the C-MAPSS subsets used in this study.}
+\label{tab:dataset_protocol}
+\tablefont
+\tighttables
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Dataset & Regimes & Faults & Train & Test & Sensors & Settings \\
+\midrule
+FD001 & 1 & 1 & 100 & 100 & 21 & 3 \\
+FD002 & 6 & 1 & 260 & 259 & 21 & 3 \\
+FD003 & 1 & 2 & 100 & 100 & 21 & 3 \\
+FD004 & 6 & 2 & 249 & 248 & 21 & 3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The subsets form a useful complexity ladder. FD001 and FD003 have one
+operating regime, while FD002 and FD004 have six regimes. FD003 and FD004 have
+two fault modes. All subsets contain 21 sensor channels and three operating
+settings.
+
+\subsection{Models and Baselines}
+
+We compare the proposed bounded latent manifold against sensor-space VAR and
+VAR(2), GRU, LSTM, and TCN forecasting models, unbounded and partially
+regularized autoencoder variants, higher-dimensional latent variants
+($K=1,\ldots,6$), and specialist versus pooled generalized models. The baseline
+comparison tests free-run stability, not merely one-step prediction accuracy.
+VAR models are closed-loop sensor-space recursions. Neural sequence baselines
+are rolled out recursively. The manifold model is rolled out in latent space
+and decoded.
+
+\subsection{Metrics}
+
+We evaluate reconstruction, stability, forecastability, and downstream RUL.
+Reconstruction is measured by $R^2$. Free-run stability is measured using
+rollout growth ratios and a boundedness indicator. Forecastability is measured
+by NRMSE at multiple horizons, skill relative to persistence, and latent
+curvature $\kappa$. RUL performance is measured using RMSE, MAE, $R^2$, and
+the NASA asymmetric score.
+
+Final algorithm results use the production training budget. Comparative ACML
+sweeps use a reduced epoch budget for tractability; their ordering and
+qualitative conclusions match the production run. All retraining scripts use
+fixed seeds, with seed robustness evaluated over seeds $\{0,1,2,3,4\}$.
+
+% ============================================================
+\section{Results}
+\label{sec:results}
+% ============================================================
+
+The results are organized around the algorithmic mechanism. We first establish
+the learned latent geometry, then evaluate final performance, free-run
+stability, dimension, ablations, robustness, transfer, and RUL context.
+
+\subsection{Latent Manifold Quality}
+
+A stable latent rollout is only meaningful if the representation organizes
+degradation trajectories coherently. Fig.~\ref{fig:latent-manifold} shows the
+intrinsic-dimensionality diagnostics and learned two-dimensional latent
+manifolds for FD001--FD004.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figlarge,height=0.43\textheight,keepaspectratio]{\mainfig/D2_manifold_FD001_FD004_combined.png}
+    \caption{Intrinsic dimensionality and learned latent manifolds across C-MAPSS.}
+    \label{fig:latent-manifold}
+\end{figure}
+
+The first two principal components explain 96.5\%, 79.5\%, 85.1\%, and 84.9\%
+of variance on FD001--FD004, respectively. FD001 has the cleanest
+two-dimensional structure, while FD002 and FD004 are more complex because of
+multiple operating regimes. Nevertheless, the learned latent coordinates
+organize trajectories by life fraction across all four subsets.
+
+\subsection{Main Cross-Dataset Performance}
+
+Table~\ref{tab:main-cross} summarizes the final bounded $K=2$ model.
+
+\begin{table}[t]
+\centering
+\caption{Final model performance across C-MAPSS.}
+\label{tab:main-cross}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+Data & Reg. & $\rho_2$ & Rec. & $\rho_{\rm VAR}$ & VAR Gr. & Man. & RUL & RUL \\
+     &      &          & $R^2$ &                 &          & Norm & RMSE & $R^2$ \\
+\midrule
+FD001 & 1 & .965 & .930 & 1.020 & 760 & 5.99 & 14.53 & .878 \\
+FD002 & 6 & .795 & .865 & 1.016 & 468 & 2.29 & 27.02 & .748 \\
+FD003 & 1 & .851 & .960 & 1.018 & 57.6 & 4.33 & 16.31 & .845 \\
+FD004 & 6 & .849 & .930 & 1.015 & 25.0 & 3.58 & 27.58 & .744 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Across all datasets, the model reconstructs selected degradation-sensitive
+channels with mean reconstruction $R^2$ between 0.865 and 0.960. The fitted
+sensor-space VAR models are non-contractive on every dataset, with
+$\rho_{\mathrm{VAR}}>1$, and VAR free-run growth ranges from about $25\times$
+to $760\times$. The bounded latent manifold remains controlled and supports
+RUL prediction with RMSE from 14.53 to 27.58 cycles.
+
+\subsection{Free-Run Stability Against Baselines}
+
+The baseline study asks whether stable rollout is specific to the proposed
+latent geometry or also appears in standard sensor-space and neural forecasters.
+
+\begin{table}[t]
+\centering
+\caption{Free-run growth by model. Values are final/initial norm ratios.}
+\label{tab:baseline-growth}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+Data & Ours & VAR & VAR(2) & LSTM & GRU & TCN \\
+\midrule
+FD001 & 1.5 & 760 & 748 & 2.9 & 2.8 & 3.2 \\
+FD002 & 1.5 & 468 & 476 & 4.7 & 13.0 & $1.27{\times}10^6$ \\
+FD003 & 1.3 & 58 & 57 & 0.9 & 1.5 & 2.8 \\
+FD004 & 0.8 & 25 & 27 & 3.4 & 1.9 & 1.4 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Fig.~\ref{fig:baselines} summarizes the same comparison visually. The manifold
+remains bounded on all four datasets. VAR and VAR(2) diverge on every dataset,
+matching Theorem~\ref{thm:linear-growth}. Neural baselines are more flexible
+but not uniformly stable: TCN diverges catastrophically on FD002, and GRU grows
+by about $13\times$ on FD002.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figmedium,height=0.34\textheight,keepaspectratio]{\mainfig/fig_baselines.png}
+    \caption{Free-run growth comparison across rollout models.}
+    \label{fig:baselines}
+\end{figure}
+
+At very short horizons, VAR can have competitive NRMSE because it is optimized
+as a local linear predictor. The claim is therefore not strict one-step
+superiority; it is stable long-horizon free-run behavior.
+
+\subsection{Latent Dimension: Capacity Versus Stability}
+
+The $K$-aware dimension sweep tests whether the two-dimensional latent state is
+a bottleneck or a dynamical regularizer. For each $K$, all latent coordinates
+and velocities are used downstream, so higher-dimensional models are not
+evaluated only through $(h_0,h_1)$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figmedium,height=0.34\textheight,keepaspectratio]{\mainfig/fig_k_tradeoff.png}
+    \caption{Latent dimension tradeoff between reconstruction and prognosis.}
+    \label{fig:k-tradeoff}
+\end{figure}
+
+The results support Proposition~\ref{prop:k-regularization}. Reconstruction
+generally improves as $K$ increases, but stability and RUL do not improve
+monotonically. On FD001, $K=2$ achieves horizon-50 NRMSE about 0.465, while
+$K=4$ and $K=6$ rise to about 0.561 and 0.555. On FD002, larger latent spaces
+become unbounded for $K\geq3$ under the stability criterion, even as
+reconstruction improves. Thus the low-dimensional latent state acts as a
+dynamical regularizer.
+
+\subsection{Ablation: Boundedness Versus Forecastability}
+
+The ablation study separates reconstruction, finite-horizon boundedness,
+forecastability, and RUL utility.
+
+\begin{table}[t]
+\centering
+\caption{Mechanism ablation on FD002.}
+\label{tab:mechanism}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Variant & Rec. $R^2$ & $\kappa$ & Skill & RUL RMSE \\
+\midrule
+No regime norm. & .999 & -- & -0.13 & 40.5 \\
+Unbounded AE & -- & .0346 & .276 & -- \\
+Full model & .865 & .0019 & .676 & 27.02 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figmedium,height=0.34\textheight,keepaspectratio]{\mainfig/boundedness_mechanism.png}
+    \caption{Mechanism analysis separating boundedness from forecastability.}
+    \label{fig:boundedness-mechanism}
+\end{figure}
+
+The most important ablation result is negative but clarifying. Under local
+constant-velocity latent rollout, the unbounded autoencoder remains finite
+over the evaluated horizon because the rollout is open-loop with small
+velocities and the tanh decoder saturates outside the training range. The
+empirical advantage of the proposed model is therefore not that every
+unbounded latent model diverges. The advantage is forecastability.
+
+On FD002, the unbounded autoencoder has curvature $\kappa=0.0346$ and forecast
+skill 0.276. The full model reduces curvature to 0.0019 and improves skill to
+0.676. The no-regime-normalization variant reaches reconstruction
+$R^2=0.999$ on FD002 but collapses to forecast skill $-0.13$ and RUL RMSE
+40.5. This directly shows that reconstruction is not prognosis.
+
+\subsection{Open-Loop Versus Closed-Loop Rollout}
+
+\begin{table}[t]
+\centering
+\caption{Open-loop versus closed-loop rollout diagnostic.}
+\label{tab:open-closed}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}llll@{}}
+\toprule
+Model & Space & Rollout & Behavior \\
+\midrule
+VAR/VAR(2) & sensor & closed-loop & diverges, $\rho>1$ \\
+Unbounded AE & latent & open-loop CV & finite over horizon \\
+Bounded AE & latent & projected CV & formally bounded \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This diagnostic clarifies why finite-horizon decoded boundedness can occur
+even for the unbounded autoencoder. VAR and VAR(2) are recursive
+closed-loop sensor-space models. The dramatic divergence in the baseline study
+is associated with observation-space recursion and non-contractive transition
+matrices, not with every unbounded latent parameterization.
+
+\subsection{Robustness and Transfer}
+
+The main conclusions persist across five random seeds. The full bounded model
+remains bounded in 100\% of seed runs. FD001 RUL is $14.39\pm0.45$, and FD002
+RUL is $27.40\pm0.13$. On FD002, the unbounded autoencoder has forecast skill
+$-0.73\pm0.82$, while the full model achieves $0.52\pm0.13$.
+
+\begin{table}[t]
+\centering
+\caption{Compact robustness and transfer summary.}
+\label{tab:robust-transfer}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Study & Dataset & Key metric & Value \\
+\midrule
+Seed robustness & FD001 & Full RUL RMSE & $14.39\pm0.45$ \\
+Seed robustness & FD002 & Full RUL RMSE & $27.40\pm0.13$ \\
+Seed robustness & FD002 & Unbounded AE skill & $-0.73\pm0.82$ \\
+Seed robustness & FD002 & Full skill & $0.52\pm0.13$ \\
+Transfer & FD002 & Specialist RUL RMSE & 26.87 \\
+Transfer & FD002 & Generalized RUL RMSE & 26.92 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The generalized model preserves bounded rollout on three of four datasets and
+achieves near-identical FD002 RUL to the specialist model. This suggests that
+the learned geometry is partially reusable across related degradation settings,
+although cross-domain generalization beyond C-MAPSS remains future work.
+
+\subsection{Downstream RUL Utility and Literature Context}
+
+Although the algorithm is not optimized solely as an RUL leaderboard model, the
+learned latent state remains useful for downstream prognosis. The final model
+reduces mean-baseline RMSE from 43.07--54.90 cycles to 14.53--27.58 cycles
+across FD001--FD004.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figlarge,height=0.38\textheight,keepaspectratio]{\mainfig/C3_health_vs_rul_FD001_FD004_combined.png}
+    \caption{Learned latent health coordinate versus RUL.}
+    \label{fig:health-rul}
+\end{figure}
+
+Table~\ref{tab:rul-literature} places the RUL numbers in context. External
+numbers are reported by the cited papers and are not necessarily directly
+comparable because preprocessing, RUL capping, validation choices, and target
+definitions differ. The table is included only to show that the latent state
+has useful downstream RUL signal; the central contribution remains stable
+long-horizon rollout.
+
+\begin{table}[t]
+\centering
+\caption{C-MAPSS RUL context. Values are RMSE in cycles.}
+\label{tab:rul-literature}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Method & FD001 & FD002 & FD003 & FD004 \\
+\midrule
+Ours & 14.53 & 27.02 & 16.31 & 27.58 \\
+AFICv \citep{alomari2023aficv} & 11.80 & 23.00 & 14.60 & 22.30 \\
+CNN-LSTM-Att. \citep{deng2024cnnlstmattention} & 15.98 & 14.45 & 13.91 & 16.64 \\
+TTSNet \citep{li2025ttsnet} & 11.02 & 13.25 & 11.06 & 18.26 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{Discussion}
+\label{sec:discussion}
+% ============================================================
+
+\subsection{Boundedness Is Not Enough}
+
+The ablation study shows that finite-horizon boundedness is not the complete
+explanation for stable prognostic performance. Under constant-velocity latent
+rollout, an unbounded autoencoder can remain numerically bounded over
+practical horizons because the latent velocities are small and the tanh decoder
+saturates. Thus, the empirical advantage of the proposed model is not merely
+that its decoded trajectories remain finite.
+
+The more important distinction is between boundedness and forecastability. The
+bounded latent model provides a formal horizon-independent guarantee when the
+full latent vector is projected into a compact domain. Smoothness and
+monotonicity then reduce latent curvature, making constant-velocity forecasting
+more accurate. Boundedness controls the admissible state space; smoothness
+controls the predictability of motion within that state space.
+
+\subsection{Reconstruction Is Not Prognosis}
+
+Several experiments show that reconstruction accuracy can be misleading. The
+no-regime-normalization ablation on FD002 achieves reconstruction $R^2=0.999$
+but has negative forecast skill and poor RUL. Similarly, increasing latent
+dimension improves reconstruction but can weaken rollout stability. This
+supports the view that degradation representations should be evaluated by
+forecastability and downstream prognostic utility, not reconstruction alone.
+
+\subsection{Algorithmic Scope}
+
+The proposed method is an algorithm for learning stable latent degradation
+states from multivariate time series with operating variables. C-MAPSS is used
+as a testbed because it provides controlled variation in operating regimes and
+fault modes. The algorithmic claim is not that the method is the best possible
+RUL regressor on C-MAPSS. The claim is that bounded low-dimensional latent
+geometry and low-curvature latent motion improve the reliability of
+long-horizon rollout, while preserving useful downstream RUL information.
+
+\subsection{Limitations}
+
+All experiments are currently on C-MAPSS. Although FD001--FD004 vary operating
+regimes and fault modes, they remain one benchmark family. External bearing or
+industrial datasets are a natural next step. The latent rollout model is also
+deliberately simple: constant-velocity extrapolation highlights the role of
+latent geometry, but more expressive latent dynamics may improve accuracy when
+degradation is highly nonlinear or abrupt.
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+
+We presented a bounded latent manifold algorithm for stable multivariate
+time-series forecasting in degradation settings. The method removes
+operating-regime effects, denoises and filters degradation-sensitive sensors,
+and learns a compact latent state with monotonicity and smoothness
+regularization. Theoretical analysis separates sensor-space closed-loop
+divergence, bounded latent rollout, and smoothness-controlled forecastability.
+Experiments show that low-dimensional bounded manifolds act as dynamical
+regularizers: larger latent dimensions can reconstruct better but roll out
+worse, and boundedness alone is not sufficient without smooth latent motion.
+The resulting representation provides stable long-horizon behavior and useful
+downstream RUL prediction.
+
+% ============================================================
+\section*{Acknowledgements}
+This section is intentionally left blank for submission and may be completed in
+the camera-ready version if appropriate.
+
+\bibliographystyle{cas-model2-names}
+\bibliography{references}
+
+% ============================================================
+\appendix
+
+\section{Full Experimental Tables}
+
+The main text reports compact summaries to avoid page-wide tables. The full
+machine-readable CSV files and LaTeX tables are included in the artifact bundle
+under \texttt{paper\_artifacts/acml\_results\_bundle/}. They include the full
+baseline table, full $K$-sweep, full ablation table, seed robustness table,
+specialist-versus-generalized table, and implementation diagnostic table.
+
+\section{Additional Rollout Diagnostics}
+
+Fig.~\ref{fig:appendix-var-eigs} shows the VAR eigenvalue spectra used to
+validate the non-contractive sensor-space rollout analysis. Fig.
+\ref{fig:appendix-free-run} shows the corresponding free-run divergence traces.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/A2_var_eigenvalues_FD001_FD004_combined.png}
+    \caption{Sensor-space VAR eigenvalue spectra across FD001--FD004.}
+    \label{fig:appendix-var-eigs}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/A4_free_run_divergence_FD001_FD004_combined.png}
+    \caption{Free-run divergence trajectories for sensor-space VAR versus
+    latent manifold rollout.}
+    \label{fig:appendix-free-run}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/A1_rollout_r2_vs_horizon_FD001_FD004_combined.png}
+    \caption{Rollout accuracy versus horizon.}
+    \label{fig:appendix-rollout-horizon}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/A3_example_trajectories_FD001_FD004_combined.png}
+    \caption{Representative sensor trajectories under true, manifold, and VAR
+    rollouts.}
+    \label{fig:appendix-example-trajectories}
+\end{figure}
+
+\section{Forecastability Diagnostics}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/B1_health_forecasts_FD001_FD004_combined.png}
+    \caption{Example latent health forecasts.}
+    \label{fig:appendix-health-forecasts}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/B2_error_vs_horizon_FD001_FD004_combined.png}
+    \caption{Forecast error growth versus horizon.}
+    \label{fig:appendix-error-horizon}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/B3_skill_vs_persistence_FD001_FD004_combined.png}
+    \caption{Forecast skill relative to persistence.}
+    \label{fig:appendix-skill}
+\end{figure}
+
+\section{RUL Diagnostics}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/C1_rul_scatter_FD001_FD004_combined.png}
+    \caption{Predicted versus true RUL and error distributions.}
+    \label{fig:appendix-rul-scatter}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/C2_examples_FD001_FD004_combined.png}
+    \caption{Representative test-engine RUL examples.}
+    \label{fig:appendix-rul-examples}
+\end{figure}
+
+\section{Additional Latent Geometry}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/D1_health_trajectories_FD001_FD004_combined.png}
+    \caption{Primary health-coordinate trajectories across engines.}
+    \label{fig:appendix-health-trajectories}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/k_vs_reconstruction_and_stability.png}
+    \caption{Expanded latent-dimension sweep showing reconstruction and
+    stability axes.}
+    \label{fig:appendix-k-stability}
+\end{figure}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\figappendix,height=0.48\textheight,keepaspectratio]{\appfig/k_vs_rul.png}
+    \caption{RUL RMSE versus latent dimension.}
+    \label{fig:appendix-k-rul}
+\end{figure}
+
+\section{Implementation and Blocked External Dataset}
+
+The theory-matched full-box latent projection and the legacy $h_0$-only
+projection are compared in the implementation diagnostic artifact
+\texttt{theory\_impl\_rollout\_compare}. An external bearing-dataset evaluation
+script was prepared, but no external degradation dataset was available at the
+time of the ACML upgrade. We therefore treat cross-domain evaluation as future
+work rather than reporting incomplete or non-reproducible external results.
+
+
+\end{document}
