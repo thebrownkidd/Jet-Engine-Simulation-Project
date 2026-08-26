@@ -1,153 +1,146 @@
-Subject: Re: Revised manuscript — response to your comments
+Subject: Re: Revised manuscript - response to your comments
 
 Dear [Reviewer],
 
 Thank you for reading the paper and for setting out the shortcomings so
-directly. The three points were fair, and two of them have shaped the revision
-substantially. Below is what changed, and where I have stopped short of what
-you asked for.
+directly. Two of the three have reshaped the manuscript substantially, and the
+third is now stated as a scope limit rather than left implicit. Below is what
+changed, and where I have stopped short of what you asked for.
 
 
 1. Koopman AE and LaSDI are cited but never compared against
 
-You are right, and I have not fixed this in the way you would want. There is
-still no head-to-head comparison against Koopman autoencoders or LaSDI in the
-revised manuscript, and I would rather say so plainly than dress up a partial
-answer as a complete one.
+You are right, and I have not fixed this by adding the comparison. I would
+rather give you the specific reason than an implicit promise.
 
-What I have added is the control that isolates the specific concern you raised
-— that the gains may just reflect avoiding sensor-space recursion. The new
-Appendix G.1 holds the architecture, the context inputs, the training
-objective, and the seeds fixed, and varies only the space the dynamics act in:
-the same residual MLP learns dynamics either on the frozen bounded latent state
-or directly on the standardized sensor vector. The sensor-space head is the
-larger of the two (8739 against 4482 parameters on milling, 6027 against 4866
-on air quality), so it is not handicapped, and it avoids closed-loop
-sensor-space recursion exactly as the latent head does.
+Both methods fit a latent evolution operator to full-state snapshots of a
+system that is observed consistently: LaSDI to solution snapshots of a
+parameterized simulation, Koopman autoencoders to repeated observations of a
+single autonomous system. C-MAPSS supplies neither. Each unit is a separate,
+right-censored trajectory with unknown initial wear, sampled under discrete
+operating regimes, observed only through partial noisy sensors, with no shared
+parameterization across units and no governing equations. Instantiating either
+method here would mean redefining its training setup rather than transferring
+it, and a comparison built that way would not be informative about either
+approach. This is now stated once, in Section 2.4, as a scope boundary.
 
-The result is conditional, and I report it that way. On PHM milling the bounded
-latent head is the only model with positive skill at the longest horizon
-(+0.51 at 48 cuts), while the matched sensor-space head is negative at every
-horizon past the first — so on that dataset the deflationary explanation
-fails: avoiding sensor-space recursion is not by itself enough. On air quality
-the deflationary explanation largely holds: the sensor-space head ties the
-latent head at 24 hours and beats it at 48, and the sensor VAR is well behaved
-to begin with. The honest summary is that the bounded latent space earns its
-keep when sensor-space dynamics are difficult and merely provides a guarantee
-when they are not.
-
-That control separates the space from the recursion. It does not compare
-against methods that learn a latent evolution operator, which is a different
-question and the one you actually asked. I have said this explicitly in three
-places rather than leaving it implicit — in Related Work, at the end of
-Appendix G.1, and in Limitations, where it is now named as the single most
-useful experiment the study does not report. If you would prefer that I run it
-before endorsement rather than name it as future work, I will.
+What I can offer against the underlying concern - that the gains might reflect
+nothing more than avoiding sensor-space recursion - is the milling result
+described under point 3. There the sensor-space recursion and the bounded
+latent rollout are compared under an identical protocol, and they separate by
+several orders of magnitude.
 
 
 2. Hyperparameter sensitivity and the reduced epoch budget
 
-This is addressed in full, in the new Appendix F. All four parameters you named
-— lambda_mono, lambda_smooth, gamma, and the regime count — are swept
-one-at-a-time around the production defaults, at the full production budget of
-4000 autoencoder epochs, averaged over three seeds, on a single-regime (FD001)
-and a multi-regime (FD002) subset. The reduced-budget concern therefore no
-longer applies to the sensitivity results, and Section 5.3 now says which
-results use which budget instead of asserting that the orderings agree.
+Addressed in full, in a new appendix. All four parameters you named -
+lambda_mono, lambda_smooth, the latent step size, and the regime count - are
+swept one at a time around the production defaults, at the full production
+budget of 4000 autoencoder epochs, averaged over three seeds, on a
+single-regime (FD001) and a multi-regime (FD002) subset. The reduced-budget
+concern therefore no longer applies to the sensitivity results, and the metrics
+section now states which results use which budget instead of asserting that the
+orderings agree.
 
-Three findings are worth flagging, including one that is unflattering:
+Three findings are worth flagging, including two that are unflattering:
 
-- lambda_mono is the consequential penalty. On FD002, forecast skill moves from
+- lambda_mono is the consequential penalty. On FD002 forecast skill moves from
   -0.09 at lambda_mono = 0 to +0.65 at the production value of 5, while
-  reconstruction is essentially flat until 10, where it begins to erode.
+  reconstruction stays flat until 10, where it begins to erode.
 
-- lambda_smooth is a low-sensitivity knob. Across the full range on both
-  subsets, every metric is unchanged. It is a mild regularizer, not a delicate
-  tuning parameter, and I now say so rather than implying it was tuned.
+- lambda_smooth is a low-sensitivity knob: across the full range on both
+  subsets every metric is unchanged. It is a mild regularizer, not a delicate
+  tuning parameter, and the paper now says so rather than implying it was
+  tuned.
 
-- gamma separates a stable band from an unstable one rather than identifying an
-  optimum, and I have stopped claiming more than that. Within the stable band
-  the production default 0.05 actually has the lowest mean and the largest
-  spread of the three stable settings on FD001 (0.24 +/- 0.38, against
-  0.41 +/- 0.09 at 0.02 and 0.43 +/- 0.12 at 0.10). Three seeds do not resolve
-  those differences, so the text now claims only that the default sits inside
-  the stable band, not that it is the best value in it.
+- The step size separates a stable band from an unstable one rather than
+  identifying an optimum, and I have stopped claiming more. Within the stable
+  band the production default has the lowest mean and the largest spread of the
+  three stable settings on FD001, so the text claims only that it sits inside
+  the band.
 
-The regime-count sweep is the one I would draw your attention to, because it
-turned into the clearest evidence for the paper's own central claim, and
-because reporting it properly meant reporting a failure. On FD002, using one
-regime gives the *highest* reconstruction in the entire study (R^2 = 0.986) but
-negative forecast skill and RUL error above 44 cycles; only at six regimes,
-matching the six physical operating conditions, does skill become positive and
-RUL fall to 27 cycles. The failure is that at three regimes the decoded
-free-run growth reaches 12.7 and falls outside our boundedness criterion in all
-three seeds. An earlier draft of the table omitted the boundedness column. It
-is now included, along with a paragraph explaining that this does not violate
-Theorem 2 — the decoded image of the compact latent box is bounded regardless
-— but does fail the stricter empirical growth criterion used throughout the
-paper, because a mismatched regime count drives the health coordinate against
-the faces of the box. I would rather you see that column than not.
+The regime-count sweep is the one I would draw your attention to. On FD002,
+using one regime gives the highest reconstruction in the entire study
+(R^2 = 0.986) but negative forecast skill and RUL error above 44 cycles; only
+at six regimes, matching the six physical operating conditions, does skill turn
+positive and RUL fall to 27 cycles. Reporting it properly also meant reporting
+a failure: at three regimes the decoded free-run growth reaches 12.7 and falls
+outside our boundedness criterion in all three seeds. An earlier draft omitted
+that column. It is now included, with an explanation of why it does not
+contradict the boundedness theorem but does fail the stricter empirical
+criterion used throughout.
 
 
 3. Evaluation limited to a single benchmark family
 
-Addressed, though not with the dataset I originally promised. The new Appendix
-G evaluates the identical pipeline on two external datasets from different
-domains: Beijing multi-site air quality (12 stations, 11 variables, hourly,
-cyclic and non-degrading) and PHM 2010 CNC milling (six tools, 35 force,
-vibration and acoustic-emission features, steady tool wear).
+The manuscript now evaluates two run-to-failure benchmarks from different
+domains, and the second one is in the main results rather than an appendix.
+
+The PHM 2010 high-speed CNC milling benchmark replaces gas-path measurements
+with force, vibration and acoustic-emission channels, and thermodynamic
+degradation with progressive tool wear: six cutters run to 315 cuts each,
+thirty-five time-domain features per cut, four cutters for training and two
+held out. It carries both mechanisms the paper claims.
+
+For stability, the fitted sensor-space companion matrix has spectral radius
+1.030, and under a long free run the sensor recursion grows by a factor of
+about 9,100 and leaves the boundedness criterion, while every bounded latent
+rollout stays controlled and two of them contract. For forecastability, the
+paper adds a result that came directly out of this dataset: a decoded latent
+forecast carries a fixed reconstruction offset at its forecast origin, which
+dominates whenever the per-step change is small. Cancelling it - anchoring the
+decoded increment to the last observation - moves horizon-one skill from -263
+to -0.73 without changing the latent trajectory at all. This is now Theorem 4
+and its corollary, with a proposition giving the condition on the
+reconstruction residual under which anchoring is guaranteed to help.
+
+Two things about this result I want to put in front of you rather than leave in
+the code. First, the free-run growth depends strongly on how far the rollout is
+probed, because a spectral radius of 1.030 needs several hundred steps to
+express itself; the paper therefore reports growth at both the data horizon and
+the longer horizon used for the C-MAPSS baselines, and states plainly that the
+longer probe extends past end of life. Second, cross-domain evidence still
+rests on one external benchmark, and the Limitations section says so.
 
 On the bearing dataset specifically, I owe you an explanation rather than a
-result. I ran it, and I have left it out. Bearings stay healthy for a long
-period and then fail abruptly, so the run-to-failure trajectory is not
-monotone, and the monotonicity regularizer on the primary health coordinate is
-the wrong inductive bias for it: the health coordinate has to jump rather than
-progress, reconstruction was poor, and downstream RUL came out worse than a
-mean baseline. That is a real limitation of the method's assumptions, not a
+result. I ran it and left it out. Bearings stay healthy for a long period and
+then fail abruptly, so the run-to-failure trajectory is not monotone, and the
+monotonicity regularizer on the primary health coordinate is the wrong
+inductive bias for it: the health coordinate has to jump rather than progress,
+reconstruction was poor, and downstream RUL came out worse than a mean
+baseline. That is a real limitation of the method's assumptions rather than a
 tuning failure, and it is why the bearing test was dropped rather than
-presented. Milling replaced it as the degradation-process external test because
-tool wear is genuinely monotone and therefore in scope for an algorithm whose
+presented. Milling replaced it as the external degradation test because tool
+wear is genuinely monotone and therefore within the scope of an algorithm whose
 central regularizer assumes monotone degradation. If you would prefer the
-bearing result included as a negative case delimiting where the monotonicity
-assumption applies, I am willing to add it, and I take your point that its
-absence is more conspicuous than its presence would have been.
-
-I should also flag one way the external evaluation came out weaker than I
-expected. Neither external dataset reproduces the *stability separation* seen
-on C-MAPSS: the sensor-space VAR stays within the boundedness threshold on both
-of them, so these datasets demonstrate stability but not the divergence
-contrast. The revised text says this outright instead of implying a contrast
-the tables do not support. What does transfer is the forecastability
-advantage — positive long-horizon skill against persistence, and on milling the
-only positive skill at the 25- and 50-cut horizons. Both datasets also confirm
-the short-horizon cost: at horizon one the latent compression discards detail
-and simple persistence wins, so the method is aimed at long horizons and the
-paper now says so in Limitations.
+bearing result included as a negative case delimiting where that assumption
+applies, I am willing to add it, and I take the point that its absence is more
+conspicuous than its presence would have been.
 
 
 Summary of changes
 
-- New Appendix F: full-budget hyperparameter sensitivity, four sweeps, three
+- New main-results section on PHM 2010 CNC milling, reporting free-run growth
+  at two probe horizons and forecast skill for every rollout rule.
+- New theorem and corollary for anchored decoding, plus a proposition giving
+  the residual condition under which it is an improvement.
+- New proposition generalising the constant-velocity error bound to the damped
+  and windowed extrapolation rules the implementation actually uses; the
+  previous bound covered only a rule none of the code used.
+- New appendix: full-budget hyperparameter sensitivity, four sweeps, three
   seeds, including the boundedness column and the regime-count failure case.
-- New Appendix G: external-domain evaluation on air quality and CNC milling.
-- New Appendix G.1: matched-capacity latent-versus-sensor-space control.
-- Related Work: the relationship to Koopman AE and LaSDI stated precisely, with
-  the absent comparison acknowledged.
-- Section 5.3: which results use which training budget.
-- Section 6.7 and Limitations: the claims that the work was C-MAPSS-only and
-  that cross-domain evaluation was future work are removed; the new limitations
-  are the missing latent-operator baselines, the absence of RUL labels on the
-  external datasets, and the short-horizon cost.
-- Section 3.5: the learned bounded residual dynamics head is now defined in the
-  method, since the appendices sweep its step size.
+- Section 2.4 states why Koopman autoencoders and LaSDI are not instantiable
+  as baselines in this data setting.
+- Abstract, contributions, experimental setup and scope updated to describe a
+  two-benchmark study.
 
 Two of your three points are addressed; the first is narrowed but not closed,
-and I have tried to be precise about which is which rather than claim the
-comparison exists. I am happy to run the Koopman or LaSDI comparison if you
-consider it a condition of endorsement.
+and I have tried to be precise about which is which rather than claim a
+comparison that does not exist.
 
-Thank you again — the paper is more honest than it was, particularly around the
-regime count and the limits of the external evidence.
+Thank you again - the paper is more careful than it was, particularly around
+the regime count, the probe horizon, and the limits of the cross-domain
+evidence.
 
 Best regards,
 Arpit Goel

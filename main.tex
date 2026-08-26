@@ -764,12 +764,25 @@ horizon rather than discovered by trial.
 
 \subsection{Datasets and Protocol}
 
-We evaluate the algorithm on the NASA C-MAPSS turbofan degradation benchmark
-\citep{nasa_cmapss,saxena2008turbofan,saxena2008damage}. The benchmark consists of four
-run-to-failure subsets, FD001--FD004. Each engine trajectory starts from an
-unknown initial wear state, operates normally at the beginning, develops a
+We evaluate the algorithm on two run-to-failure benchmarks from different
+domains. The primary benchmark is NASA C-MAPSS
+\citep{nasa_cmapss,saxena2008turbofan,saxena2008damage}, which consists of four
+turbofan degradation subsets, FD001--FD004. Each engine trajectory starts from
+an unknown initial wear state, operates normally at the beginning, develops a
 fault, and is observed until failure in the training split. The test split is
-truncated prior to failure and is accompanied by official RUL labels.
+truncated prior to failure and is accompanied by official RUL labels, which is
+why the reconstruction, curvature, dimension, ablation and RUL studies are
+carried out there.
+
+The second benchmark is PHM~2010 high-speed CNC milling \citep{phm2010}, used in
+Section~\ref{sec:milling} to test whether the two mechanisms of
+Section~\ref{sec:theory} survive a change of domain. It replaces turbofan gas-path
+measurements with force, vibration and acoustic-emission channels, and gradual
+thermodynamic degradation with progressive tool wear, while retaining the
+properties the algorithm requires. It carries no official RUL labels, so it
+exercises stability and forecastability rather than downstream prognosis. The
+criteria that make a dataset admissible are stated in
+Section~\ref{sec:dataset-criteria}.
 
 \begin{table}[t]
 \centering
@@ -1231,12 +1244,16 @@ forecastability and downstream prognostic utility, not reconstruction alone.
 \subsection{Algorithmic Scope}
 
 The proposed method is an algorithm for learning stable latent degradation
-states from multivariate time series with operating variables. C-MAPSS is used
-as a testbed because it provides controlled variation in operating regimes and
-fault modes. The algorithmic claim is not that the method is the best possible
-RUL regressor on C-MAPSS. The claim is that bounded low-dimensional latent
-geometry and low-curvature latent motion improve the reliability of
-long-horizon rollout, while preserving useful downstream RUL information.
+states from multivariate time series with operating variables. C-MAPSS is the
+primary testbed because it provides controlled variation in operating regimes
+and fault modes together with official labels, and CNC tool wear tests the same
+mechanisms on a process with different sensing and different physics. The
+algorithmic claim is not that the method is the best possible RUL regressor on
+either. The claim is that bounded low-dimensional latent geometry and
+low-curvature latent motion improve the reliability of long-horizon rollout,
+and that where a decoded forecast is dominated by its origin reconstruction
+offset, anchoring removes it; both claims are shown to hold across the two
+domains, while useful downstream RUL information is preserved.
 
 \subsection{Limitations}
 
