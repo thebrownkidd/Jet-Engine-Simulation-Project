@@ -36,7 +36,7 @@
     | Parameter | Value |
     |---|---|
     | Latent dimension k | **4** (chosen by k-sweep, see Section 3) |
-    | AE epochs | 800 |
+    | AE epochs | 2000 |
     | Dynamics epochs | 400 |
     | Seeds for MLP heads | [0, 1, 2] |
     | Monotonicity penalty λ_mono | 1.0 |
@@ -62,7 +62,7 @@
       2. The k where incremental variance gain drops below 5%
 
     We take the **more conservative choice** (smaller k). For k=4, the reconstruction
-    R² (mean across sensors) = **0.732** (worst single sensor = -0.621).
+    R² (mean across sensors) = **0.730** (worst single sensor = -0.575).
 
     **Why PCA elbow, not max reconstruction R²?**
     Reconstruction R² always rises with k, so choosing max R² would lead to overfitting
@@ -82,12 +82,12 @@
 
     |   k |   recon_r2 |   recon_r2_min |
 |----:|-----------:|---------------:|
-|   1 |     0.3896 |        -0.6728 |
-|   2 |     0.7094 |        -0.5113 |
-|   3 |     0.6851 |        -0.9138 |
-|   4 |     0.7319 |        -0.6209 |
-|   5 |     0.7152 |        -0.7319 |
-|   6 |     0.7092 |        -0.635  |
+|   1 |     0.3896 |        -0.6766 |
+|   2 |     0.7094 |        -0.5133 |
+|   3 |     0.6859 |        -0.861  |
+|   4 |     0.7296 |        -0.5753 |
+|   5 |     0.7157 |        -0.726  |
+|   6 |     0.7098 |        -0.6378 |
 
     A higher recon_r2 means the compressed representation is more faithful.
     Diminishing returns usually set in around k=3–5; we pick the elbow point
@@ -115,11 +115,16 @@
 
     | model       |   skill_h1 |   nrmse_h1 |   skill_h10 |   nrmse_h10 |   skill_h25 |   nrmse_h25 |   skill_h50 |   nrmse_h50 |   freerun_growth | bounded   |
 |:------------|-----------:|-----------:|------------:|------------:|------------:|------------:|------------:|------------:|-----------------:|:----------|
-| persistence |      0     |     0.0366 |      0      |      0.2892 |      0      |      0.5028 |      0      |      0.8765 |           1      | True      |
-| cv          |   -158.037 |     0.4618 |     -2.3377 |      0.5284 |     -1.4711 |      0.7904 |     -0.1931 |      0.9574 |           3.1625 | True      |
-| var_sensor  |     -9.511 |     0.1187 |     -3.7133 |      0.6279 |     -2.6256 |      0.9574 |     -2.8581 |      1.7216 |           2.6934 | True      |
-| mlp_noctx   |   -158.02  |     0.4618 |     -1.7143 |      0.4764 |      0.1246 |      0.4698 |      0.438  |      0.6562 |           2.3602 | True      |
-| mlp_ctx     |   -158.02  |     0.4618 |     -1.7143 |      0.4764 |      0.1246 |      0.4698 |      0.438  |      0.6562 |           2.3602 | True      |
+| persistence |     0      |     0.0366 |      0      |      0.2892 |      0      |      0.5028 |      0      |      0.8765 |           1      | True      |
+| cv          |  -263.221  |     0.5953 |     -9.159  |      0.9219 |     -5.0625 |      1.2381 |     -0.865  |      1.197  |           1.6228 | True      |
+| cv_damped   |  -263.221  |     0.5953 |     -6.3806 |      0.7858 |     -2.434  |      0.9318 |     -0.3498 |      1.0183 |           0.98   | True      |
+| holt        |  -267.361  |     0.5999 |     -7.0735 |      0.8218 |     -3.4715 |      1.0633 |     -0.352  |      1.0192 |           1.9624 | True      |
+| trend_lw    |  -263.377  |     0.5954 |     -7.4172 |      0.8391 |     -3.8124 |      1.1031 |     -0.7376 |      1.1554 |           0.9992 | True      |
+| cvd_anch    |    -0.7288 |     0.0482 |     -1.0436 |      0.4135 |     -0.8617 |      0.6861 |      0.0474 |      0.8555 |           0.9804 | True      |
+| holt_anch   |    -1.3461 |     0.0561 |     -1.7448 |      0.4792 |     -1.7844 |      0.839  |     -0.1245 |      0.9295 |           2.1416 | True      |
+| var_sensor  |    -9.511  |     0.1187 |     -3.7133 |      0.6279 |     -2.6256 |      0.9574 |     -2.8581 |      1.7216 |        9104.43   | False     |
+| mlp_noctx   |  -243.687  |     0.5728 |     -2.9707 |      0.5763 |     -0.1831 |      0.5466 |      0.3906 |      0.6837 |           3.4493 | True      |
+| mlp_ctx     |  -243.687  |     0.5728 |     -2.9707 |      0.5763 |     -0.1831 |      0.5466 |      0.3906 |      0.6837 |           3.4493 | True      |
 
     **Winner:** `persistence` (highest mean skill at horizons [10, 25, 50]).
 
@@ -274,11 +279,11 @@
     ## 8. Honest summary
 
     ### What worked
-    - Reconstruction R² at the chosen k = **0.732**.
+    - Reconstruction R² at the chosen k = **0.730**.
 - The best-head free-run forecast stays bounded (growth = 1.00×).
 
     ### What did not work / limitations
-    - **Constant-velocity rollout** (old method) performs poorly at h=10 (skill -2.338), confirming it is the weakest link.
+    - **Constant-velocity rollout** (old method) performs poorly at h=10 (skill -9.159), confirming it is the weakest link.
 
     ---
 

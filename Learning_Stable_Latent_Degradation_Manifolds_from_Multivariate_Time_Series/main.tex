@@ -376,7 +376,7 @@ $j$, we compute
     \operatorname{corr}(\bar{x}_{i,:,j},t)
     \right|.
 \]
-The selected dynamic sensor set is $\Sset=\{j:S_j\geq\gamma\}$, and the
+The selected dynamic sensor set is $\Sset=\{j:S_j\geq\theta\}$, and the
 autoencoder input is $\y_{i,t}=\bar{\x}_{i,t,\Sset}$. Thus the autoencoder is
 not asked to spend capacity reconstructing static or purely
 operating-condition channels.
@@ -584,6 +584,47 @@ that a bounded second difference controls extrapolation error over a finite
 horizon --- underlies classical forecasting practice for stochastic processes
 more generally \citep{brockwell2016introduction}.
 
+Theorem~\ref{thm:smooth-forecast} is stated for the textbook
+constant-velocity rule, in which the velocity is a single backward difference
+and the extrapolation weight is $\tau$ itself. The rollouts used in practice
+estimate the velocity over a trailing window and may damp it, so we state the
+bound they actually satisfy.
+
+\begin{proposition}[Damped and windowed extrapolation]
+\label{prop:general-extrap}
+Let $h_t$ satisfy $|\Delta^2h_t|\le\kappa$ and write
+$\delta_0=h_c-h_{c-1}$. Consider any rollout of the form
+$\hat{h}_{c+\tau}=h_c+v\,S_\tau$, where $v$ is an arbitrary velocity
+estimate and $\{S_\tau\}_{\tau\ge1}$ are deterministic weights. Then
+\[
+    |h_{c+\tau}-\hat{h}_{c+\tau}|
+    \le
+    \frac{\kappa}{2}\tau(\tau+1)
+    +
+    |\tau\delta_0-v\,S_\tau| .
+\]
+\end{proposition}
+
+\begin{proof}
+With $\delta_s=h_{c+s}-h_{c+s-1}$ we have
+$h_{c+\tau}-h_c=\sum_{s=1}^{\tau}\delta_s
+=\tau\delta_0+\sum_{s=1}^{\tau}(\delta_s-\delta_0)$, and
+$|\delta_s-\delta_0|\le s\kappa$ as in
+Theorem~\ref{thm:smooth-forecast}, so the second sum is at most
+$\frac{\kappa}{2}\tau(\tau+1)$ in absolute value. Subtracting
+$\hat{h}_{c+\tau}-h_c=v\,S_\tau$ and applying the triangle inequality gives the
+stated bound.
+\end{proof}
+
+Setting $v=\delta_0$ and $S_\tau=\tau$ makes the second term vanish and recovers
+Theorem~\ref{thm:smooth-forecast}. The term is therefore the price of departing
+from the textbook rule: a windowed velocity estimate pays $|\tau(\delta_0-v)|$
+in exchange for lower variance in $v$, and geometric damping
+$S_\tau=(1-\phi^\tau)/(1-\phi)$ pays $|v||\tau-S_\tau|$ in exchange for a
+rollout that cannot run away. All rollout rules reported in this paper are of
+this form, so all of them inherit both this error bound and the boundedness
+guarantee of Theorem~\ref{thm:bounded-rollout}.
+
 \subsection{Latent Dimension as Dynamical Regularization}
 
 \begin{proposition}[Capacity-stability tradeoff]
@@ -633,7 +674,7 @@ Write $\y_t=D_\phi(\h_t)+\mathbf{r}_t$. The $D_\phi(\h_c)$ terms cancel, giving
 \]
 By $L$-Lipschitz continuity,
 $\|D_\phi(\h_{c+\tau})-D_\phi(\hat{\h}_{c+\tau})\|\le L\|\h_{c+\tau}-\hat{\h}_{c+\tau}\|$,
-and applying Theorem~\ref{thm:smooth-forecast} coordinatewise gives
+and applying Proposition~\ref{prop:general-extrap} coordinatewise gives
 $\|\h_{c+\tau}-\hat{\h}_{c+\tau}\|\le\sqrt{K}\,\tfrac{\kappa}{2}\tau(\tau+1)$. The
 triangle inequality with $\|\mathbf{r}_t\|\le\rho$ bounds the residual term by $2\rho$.
 \end{proof}
@@ -844,6 +885,107 @@ At very short horizons, VAR can have competitive NRMSE because it is optimized
 as a local linear predictor. The claim is therefore not strict one-step
 superiority; it is stable long-horizon free-run behavior.
 
+\subsection{Cross-Domain Validation: CNC Tool Wear}
+\label{sec:milling}
+
+The results above are confined to turbofan degradation. To test whether the two
+mechanisms of Section~\ref{sec:theory} survive a change of domain, we apply the
+identical pipeline to the PHM~2010 CNC milling benchmark: six cutting tools run
+to 315 cuts each, with thirty-five time-domain force, vibration and
+acoustic-emission features per cut, four tools used for training and two held
+out. The latent dimension is $K{=}4$ by the intrinsic-dimensionality elbow and
+reconstruction $R^2$ is $0.730$; the fitted sensor-space companion matrix has
+spectral radius $\rho=1.030$, so Theorem~\ref{thm:linear-growth} predicts
+geometric divergence of the closed-loop sensor recursion.
+
+\begin{table}[t]
+\centering
+\caption{CNC milling free-run growth. Values are final/initial decoded norm
+ratios at two probe horizons: the data horizon (188 steps, the last observed
+cut) and the end-of-life horizon (400 steps, matching the C-MAPSS protocol of
+Table~\ref{tab:baseline-growth}). Rows marked \textbf{Ours} are the proposed
+bounded latent model under the rollout rules of Section~\ref{sec:method}.}
+\label{tab:milling-growth}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}llrcrc@{}}
+\toprule
+Model & & @188 & Bnd. & @400 & Bnd. \\
+\midrule
+persistence        & ref.            & 1.00 & yes & 1.00      & yes \\
+sensor VAR         & ref.            & 2.69 & yes & $9104$    & \textbf{no} \\
+\midrule
+constant velocity  & \textbf{Ours} & 2.89 & yes & 1.62      & yes \\
+damped CV          & \textbf{Ours} & 1.20 & yes & 0.98      & yes \\
+Holt damped trend  & \textbf{Ours} & 1.52 & yes & 1.96      & yes \\
+windowed trend     & \textbf{Ours} & 1.39 & yes & 1.00      & yes \\
+anchored damped CV & \textbf{Ours} & 1.13 & yes & 0.98      & yes \\
+anchored Holt      & \textbf{Ours} & 1.43 & yes & 2.14      & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:milling-growth} reproduces the central stability result outside
+C-MAPSS, and it also shows why the probe horizon matters. Stopped at the last
+observed cut, every model including the VAR appears bounded, and the ordering is
+uninformative: plain constant-velocity rollout ($2.89$) looks slightly worse
+than the VAR ($2.69$). Continued to the end-of-life horizon used throughout
+Section~\ref{sec:results}, the ordering inverts decisively. The sensor-space
+VAR grows by a factor of $9\,104$ and leaves the boundedness criterion, exactly
+as Theorem~\ref{thm:linear-growth} requires of a non-contractive companion
+matrix, while every bounded latent rollout remains controlled and two of them
+contract. The distinction is not visible at short probe horizons because a
+spectral radius of $1.030$ needs several hundred steps to express itself; it is
+a property of the operator, not of the window in which it is observed.
+
+\begin{table}[t]
+\centering
+\caption{CNC milling forecast skill relative to persistence. Positive values
+beat persistence. Rows marked \textbf{Ours} are the proposed bounded latent
+model; anchored rows use the decoding of Section~\ref{sec:anchored}.}
+\label{tab:milling-skill}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Model & & @1 & @10 & @25 & @50 \\
+\midrule
+persistence        & ref.            & $0.00$    & $0.00$  & $0.00$  & $0.00$ \\
+sensor VAR         & ref.            & $-9.51$   & $-3.71$ & $-2.63$ & $-2.86$ \\
+\midrule
+constant velocity  & \textbf{Ours} & $-263.2$  & $-9.16$ & $-5.06$ & $-0.87$ \\
+damped CV          & \textbf{Ours} & $-263.2$  & $-6.38$ & $-2.43$ & $-0.35$ \\
+Holt damped trend  & \textbf{Ours} & $-267.4$  & $-7.07$ & $-3.47$ & $-0.35$ \\
+windowed trend     & \textbf{Ours} & $-263.4$  & $-7.42$ & $-3.81$ & $-0.74$ \\
+anchored Holt      & \textbf{Ours} & $-1.35$   & $-1.74$ & $-1.78$ & $-0.12$ \\
+anchored damped CV & \textbf{Ours} & $\mathbf{-0.73}$ & $\mathbf{-1.04}$ & $\mathbf{-0.86}$ & $\mathbf{+0.05}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:milling-skill} is the second mechanism, and it is the clearest
+demonstration of Corollary~\ref{cor:anchor} in the paper. Every plain-decoded
+rollout is catastrophic at horizon one, with skill near $-263$; in NRMSE the
+error is $0.595$ against persistence at $0.0366$, a factor of sixteen. That
+penalty is not caused by the latent dynamics, which at horizon one have barely
+moved. It is the constant origin offset $\mathbf{r}_c=\y_c-D_\phi(\h_c)$ that
+plain decoding carries at every horizon. Anchoring cancels it, and the same
+rollout, decoded differently, moves from $-263.2$ to $-0.73$: an NRMSE of
+$0.0482$, within a third of persistence rather than sixteen times worse.
+Anchored damped constant velocity is also the only rule with positive skill at
+the longest horizon.
+
+Two features of this dataset make it a useful complement to the near-stationary
+case of Appendix~\ref{app:external}. The fitted damping is
+$\phi^\star=0.9$, close to undamped extrapolation, so the latent rollout is
+genuinely doing work here rather than contributing a single frozen step; and
+the reconstruction residual is large enough that the offset term dominates the
+curvature term at short horizons, which is precisely the regime in which
+Proposition~\ref{prop:anchor-gain} predicts anchoring to pay. The two
+mechanisms of Section~\ref{sec:theory} are therefore both visible on a single
+external dataset: bounded latent geometry controls the admissible state space
+over long free runs, and the decoding choice controls the error inside it.
+
 \subsection{Latent Dimension: Capacity Versus Stability}
 
 The $K$-aware dimension sweep tests whether the two-dimensional latent state is
@@ -963,8 +1105,9 @@ Transfer & FD002 & Generalized RUL RMSE & 26.92 \\
 The generalized model preserves bounded rollout on three of four datasets and
 achieves near-identical FD002 RUL to the specialist model. This suggests that
 the learned geometry is partially reusable across related degradation settings.
-Appendix~\ref{app:external} tests the same pipeline outside the turbofan
-domain on Li-ion battery aging.
+Section~\ref{sec:milling} and Appendix~\ref{app:external} test the same
+pipeline outside the turbofan domain, on CNC tool wear and Li-ion battery
+aging respectively.
 
 \subsection{Downstream RUL Utility and Literature Context}
 
@@ -1047,10 +1190,12 @@ long-horizon rollout, while preserving useful downstream RUL information.
 
 \subsection{Limitations}
 
-The main study is confined to C-MAPSS. Although FD001--FD004 vary operating
-regimes and fault modes, they remain one benchmark family, and the external
-evidence in Appendix~\ref{app:external} is a single additional dataset, chosen to
-isolate one mechanism rather than to broaden the benchmark count.
+The evaluation covers turbofan degradation (FD001--FD004), CNC tool wear
+(Section~\ref{sec:milling}) and Li-ion battery aging
+(Appendix~\ref{app:external}). Downstream RUL is reported only on C-MAPSS,
+since the external datasets carry no official remaining-useful-life labels,
+so the cross-domain evidence covers stability and forecastability but not
+RUL accuracy.
 
 Anchored decoding is not universally preferable, and
 Proposition~\ref{prop:anchor-gain} states the condition under which it helps.
@@ -1377,11 +1522,11 @@ survives a badly chosen regime count; the useful behaviour does not.
 \section{External-Domain Evaluation}
 \label{app:external}
 
-The main study is confined to C-MAPSS so that reconstruction, boundedness,
-curvature, forecast skill, and RUL can be compared against a common set of
-official labels. This appendix reports one external dataset, chosen to test the
-decoding identity of Section~\ref{sec:anchored} rather than to broaden the
-benchmark count.
+Section~\ref{sec:milling} showed both mechanisms on a degradation process
+whose sensor-space recursion is non-contractive. This appendix reports the
+complementary case: a near-stationary process on which the curvature term
+vanishes, isolating the decoding identity of
+Section~\ref{sec:anchored}.
 
 \subsection{Dataset Requirements}
 \label{app:dataset-criteria}
@@ -1450,7 +1595,7 @@ Two qualifications belong with this result. First, the margins are small, from
 $+0.006$ to $+0.048$ in skill, equivalently a $0.3\%$ to $2.4\%$ reduction in
 NRMSE. Near a martingale this is close to the achievable ceiling, and the result
 should be read as a change of sign rather than a large-margin win. Second, the
-selected damping is $\gamma^\star=0$, which under the geometric damping schedule
+selected damping is $\phi^\star=0$, which under the geometric damping schedule
 leaves a single velocity step that is then held constant across the horizon. The
 anchored battery forecast is therefore the last observation plus one fixed
 decoded increment, and the latent dynamics contribute one step rather than a

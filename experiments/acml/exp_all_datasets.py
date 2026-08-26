@@ -124,6 +124,12 @@ DATASET_CONFIGS = {
 ANCHORS = (0.5, 0.65, 0.8)
 FREE_STEPS = X.FREE_STEPS
 BOUNDED_GROWTH_THRESH = X.BOUNDED_GROWTH_THRESH
+CUTOFF_FRAC = X.CUTOFF_FRAC
+# When True, the free-run matches the C-MAPSS protocol exactly: cutoff at
+# CUTOFF_FRAC of the trajectory and FREE_STEPS rolled unconditionally, so the
+# rollout continues past end-of-life. When False (default) the roll stops at
+# the last observed step, which measures divergence only within the data.
+FREERUN_BEYOND_EOL = False
 
 # Preprocessing constants — match the validated manifold pipeline
 TREND_THRESH = 0.20    # min mean |corr(sensor, cycle)| to retain a sensor
@@ -496,9 +502,15 @@ def eval_freerun(pred_fn, te_trajs, horizons):
     tr = max(te_trajs, key=lambda t: len(t.x_std))
     T = len(tr.x_std)
     hmax = max(horizons)
-    # Use same dynamic cutoff: at least 2× max_horizon of free-run steps
-    c0 = max(int(0.5 * T), T - 2*hmax)
-    steps = min(FREE_STEPS, T - c0 - 1)
+    if FREERUN_BEYOND_EOL:
+        # C-MAPSS-matched: fixed cutoff fraction, roll FREE_STEPS regardless of
+        # trajectory length, so the operator is probed past end-of-life.
+        c0 = int(CUTOFF_FRAC * T)
+        steps = FREE_STEPS
+    else:
+        # Data-horizon: stop at the last observed step.
+        c0 = max(int(0.5 * T), T - 2*hmax)
+        steps = min(FREE_STEPS, T - c0 - 1)
     if steps < 1:
         return float("nan"), False
     pred = pred_fn(tr, c0, steps)
@@ -1124,9 +1136,15 @@ def main():
                     help="dynamics head training epochs")
     ap.add_argument("--lambda-smooth", type=float, default=0.5,
                     help="AE latent smoothness penalty (production C-MAPSS = 2.0)")
+    ap.add_argument("--freerun-beyond-eol", action="store_true",
+                    help="probe the free run past end-of-life using the "
+                         "C-MAPSS protocol (cutoff at CUTOFF_FRAC, "
+                         "FREE_STEPS rolled unconditionally)")
     ap.add_argument("--seeds", type=int, nargs="*", default=[0, 1],
                     help="random seeds for MLP heads")
     args = ap.parse_args()
+    global FREERUN_BEYOND_EOL
+    FREERUN_BEYOND_EOL = bool(args.freerun_beyond_eol)
 
     print("Unified experiment runner — context-conditioned bounded latent dynamics")
     print(f"Datasets: {args.datasets}")
