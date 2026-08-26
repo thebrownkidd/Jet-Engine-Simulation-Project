@@ -234,6 +234,13 @@ self-attention \citep{zhang2022bigru}. Recent C-MAPSS RUL models include
 CNN-LSTM-Attention \citep{deng2024cnnlstmattention}
 and Transformer--TCN--Self-Attention feature fusion \citep{li2025ttsnet}.
 
+Beyond turbofan data, the PHM~2010 high-speed milling benchmark \citep{phm2010} is
+a standard testbed for tool-wear prognostics from force, vibration and
+acoustic-emission channels, and is commonly addressed with deep sequence models
+trained on its labelled cutters \citep{zhang2023toolwear}. We use it in
+Section~\ref{sec:milling} as a degradation process whose sensor dynamics differ
+substantially from C-MAPSS.
+
 However, supervised RUL accuracy and stable free-run forecasting are different
 objectives. A sequence model can be accurate over a short horizon or under
 teacher forcing while becoming unstable when recursively rolled forward. In
@@ -461,7 +468,7 @@ Theorem~\ref{thm:bounded-rollout} applies verbatim for any $g_\psi$: the
 learned variant changes only which motion within $\Hspace$ is predicted, never
 whether the rollout stays in $\Hspace$. This head is used in the sensitivity
 sweep of Appendix~\ref{app:sensitivity} and the external-domain evaluation of
-Appendix~\ref{app:external}.
+Section~\ref{sec:battery}.
 
 For RUL prediction, the downstream regressor uses all latent coordinates and
 their local velocities:
@@ -619,7 +626,8 @@ stated bound.
 Setting $v=\delta_0$ and $S_\tau=\tau$ makes the second term vanish and recovers
 Theorem~\ref{thm:smooth-forecast}. The term is therefore the price of departing
 from the textbook rule: a windowed velocity estimate pays $|\tau(\delta_0-v)|$
-in exchange for lower variance in $v$, and geometric damping
+in exchange for lower variance in $v$, and geometric damping in the manner of
+damped-trend exponential smoothing \citep{gardner1985forecasting}
 $S_\tau=(1-\phi^\tau)/(1-\phi)$ pays $|v||\tau-S_\tau|$ in exchange for a
 rollout that cannot run away. All rollout rules reported in this paper are of
 this form, so all of them inherit both this error bound and the boundedness
@@ -885,12 +893,29 @@ At very short horizons, VAR can have competitive NRMSE because it is optimized
 as a local linear predictor. The claim is therefore not strict one-step
 superiority; it is stable long-horizon free-run behavior.
 
+\subsection{Dataset Requirements for Cross-Domain Transfer}
+\label{sec:dataset-criteria}
+\label{app:dataset-criteria}
+
+A candidate dataset for this algorithm must supply four things: operating
+conditions or settings that are recorded separately from the measurements, so
+that regimes can be identified and normalized out; noisy sensor channels, so
+that denoising and trend-based selection have something to act on; a
+degradation process, so that the health coordinate has a direction to track;
+and enough temporal structure for the signal to be forecastable at the horizons
+of interest. Official remaining-useful-life labels are \emph{not} required. RUL
+is a downstream use of the latent state, not a precondition for learning it,
+and a dataset that satisfies the first four properties can exercise
+reconstruction, boundedness, curvature, and forecast skill without them.
+
+
 \subsection{Cross-Domain Validation: CNC Tool Wear}
 \label{sec:milling}
 
 The results above are confined to turbofan degradation. To test whether the two
 mechanisms of Section~\ref{sec:theory} survive a change of domain, we apply the
-identical pipeline to the PHM~2010 CNC milling benchmark: six cutting tools run
+identical pipeline to the PHM~2010 CNC milling benchmark \citep{phm2010}: six
+cutting tools run
 to 315 cuts each, with thirty-five time-domain force, vibration and
 acoustic-emission features per cut, four tools used for training and two held
 out. The latent dimension is $K{=}4$ by the intrinsic-dimensionality elbow and
@@ -976,7 +1001,7 @@ Anchored damped constant velocity is also the only rule with positive skill at
 the longest horizon.
 
 Two features of this dataset make it a useful complement to the near-stationary
-case of Appendix~\ref{app:external}. The fitted damping is
+case of Section~\ref{sec:battery}. The fitted damping is
 $\phi^\star=0.9$, close to undamped extrapolation, so the latent rollout is
 genuinely doing work here rather than contributing a single frozen step; and
 the reconstruction residual is large enough that the offset term dominates the
@@ -985,6 +1010,71 @@ Proposition~\ref{prop:anchor-gain} predicts anchoring to pay. The two
 mechanisms of Section~\ref{sec:theory} are therefore both visible on a single
 external dataset: bounded latent geometry controls the admissible state space
 over long free runs, and the decoding choice controls the error inside it.
+
+\subsection{Cross-Domain Validation: Li-ion Battery Aging}
+\label{sec:battery}
+
+The NASA Li-ion battery aging dataset \citep{saha2007battery} satisfies these
+requirements. It provides
+26 cells, each run over repeated discharge cycles until end of life at
+approximately 70\% of initial capacity, with per-discharge-cycle summaries of
+the voltage, current, and temperature curves alongside the measured capacity.
+Seven operating-condition groups, defined by ambient temperature and discharge
+protocol, are recorded in the dataset metadata and are used for the
+per-condition normalization step in place of the clustering used on C-MAPSS,
+since the conditions are given rather than inferred. Evaluation is at horizons
+$\{1,10,30,60\}$ discharge cycles.
+
+The dataset is deliberately the unfavourable case. Capacity fade is gradual, but
+Li-ion cells recover capacity after rest, so the health signal is not monotone
+in the way turbofan degradation is, and the fitted sensor-space companion matrix
+has spectral radius close to one. The process is therefore near a driftless
+random walk, for which persistence is the minimum-variance predictor and no
+rollout, latent or otherwise, can be expected to beat it by a wide margin. It is
+precisely this regime that isolates the reconstruction term of
+Theorem~\ref{thm:anchored} from the curvature term.
+
+\begin{table}[t]
+\centering
+\caption{NASA battery forecast skill relative to persistence at each horizon,
+with free-run growth and boundedness. Plain-decoded latent rollout (damped
+constant velocity) is dominated by persistence; anchored decoding is the only
+latent head with positive skill at every horizon.}
+\label{tab:ext-battery}
+\tinytable
+\verytighttables
+\begin{tabular}{@{}lrrrrrc@{}}
+\toprule
+Model & Skill@1 & Skill@10 & Skill@30 & Skill@60 & Growth & Bnd. \\
+\midrule
+persistence        & $0.00$    & $0.00$   & $0.00$   & $0.00$   & 1.00 & yes \\
+sensor VAR         & $-29.84$  & $-7.44$  & $-6.72$  & $-3.65$  & 0.92 & yes \\
+damped CV (plain)  & $-610.8$  & $-15.19$ & $-7.89$  & $-2.81$  & 1.00 & yes \\
+anchored decoding  & $+0.05$   & $+0.01$  & $+0.05$  & $+0.04$  & 1.00 & yes \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Every plain-decoded head is far worse than persistence at every horizon, the
+damped constant-velocity rollout reaching a skill of $-610.8$ at horizon one.
+Anchored decoding removes the origin offset and is the only latent head with
+positive skill at every horizon, while also exceeding the sensor-space VAR
+everywhere; free-run growth stays at $1.00$. The damping coefficient and the
+Holt parameters are selected on training trajectories only.
+
+Two qualifications belong with this result. First, the margins are small, from
+$+0.006$ to $+0.048$ in skill, equivalently a $0.3\%$ to $2.4\%$ reduction in
+NRMSE. Near a martingale this is close to the achievable ceiling, and the result
+should be read as a change of sign rather than a large-margin win. Second, the
+selected damping is $\phi^\star=0$, which under the geometric damping schedule
+leaves a single velocity step that is then held constant across the horizon. The
+anchored battery forecast is therefore the last observation plus one fixed
+decoded increment, and the latent dynamics contribute one step rather than a
+trajectory. This is the expected behaviour when the curvature term of
+Theorem~\ref{thm:anchored} is negligible and the residual term binds: the
+dataset exercises the decoding identity, not the rollout. The C-MAPSS results of
+Section~\ref{sec:results} exercise the opposite end, where curvature dominates
+and the rollout does the work.
 
 \subsection{Latent Dimension: Capacity Versus Stability}
 
@@ -1105,9 +1195,8 @@ Transfer & FD002 & Generalized RUL RMSE & 26.92 \\
 The generalized model preserves bounded rollout on three of four datasets and
 achieves near-identical FD002 RUL to the specialist model. This suggests that
 the learned geometry is partially reusable across related degradation settings.
-Section~\ref{sec:milling} and Appendix~\ref{app:external} test the same
-pipeline outside the turbofan domain, on CNC tool wear and Li-ion battery
-aging respectively.
+Sections~\ref{sec:milling} and~\ref{sec:battery} test the same pipeline
+outside the turbofan domain, on CNC tool wear and Li-ion battery aging.
 
 \subsection{Downstream RUL Utility and Literature Context}
 
@@ -1192,7 +1281,7 @@ long-horizon rollout, while preserving useful downstream RUL information.
 
 The evaluation covers turbofan degradation (FD001--FD004), CNC tool wear
 (Section~\ref{sec:milling}) and Li-ion battery aging
-(Appendix~\ref{app:external}). Downstream RUL is reported only on C-MAPSS,
+(Section~\ref{sec:battery}). Downstream RUL is reported only on C-MAPSS,
 since the external datasets carry no official remaining-useful-life labels,
 so the cross-domain evidence covers stability and forecastability but not
 RUL accuracy.
@@ -1519,91 +1608,6 @@ is driven against the faces of the box, and the decoded trajectory traverses a
 large part of a set that is nonetheless compact. The architectural guarantee
 survives a badly chosen regime count; the useful behaviour does not.
 
-\section{External-Domain Evaluation}
-\label{app:external}
-
-Section~\ref{sec:milling} showed both mechanisms on a degradation process
-whose sensor-space recursion is non-contractive. This appendix reports the
-complementary case: a near-stationary process on which the curvature term
-vanishes, isolating the decoding identity of
-Section~\ref{sec:anchored}.
-
-\subsection{Dataset Requirements}
-\label{app:dataset-criteria}
-
-A candidate dataset for this algorithm must supply four things: operating
-conditions or settings that are recorded separately from the measurements, so
-that regimes can be identified and normalized out; noisy sensor channels, so
-that denoising and trend-based selection have something to act on; a
-degradation process, so that the health coordinate has a direction to track;
-and enough temporal structure for the signal to be forecastable at the horizons
-of interest. Official remaining-useful-life labels are \emph{not} required. RUL
-is a downstream use of the latent state, not a precondition for learning it,
-and a dataset that satisfies the first four properties can exercise
-reconstruction, boundedness, curvature, and forecast skill without them.
-
-\subsection{NASA Li-ion Battery Aging}
-
-The NASA Li-ion battery aging dataset satisfies these requirements. It provides
-26 cells, each run over repeated discharge cycles until end of life at
-approximately 70\% of initial capacity, with per-discharge-cycle summaries of
-the voltage, current, and temperature curves alongside the measured capacity.
-Seven operating-condition groups, defined by ambient temperature and discharge
-protocol, are recorded in the dataset metadata and are used for the
-per-condition normalization step in place of the clustering used on C-MAPSS,
-since the conditions are given rather than inferred. Evaluation is at horizons
-$\{1,10,30,60\}$ discharge cycles.
-
-The dataset is deliberately the unfavourable case. Capacity fade is gradual, but
-Li-ion cells recover capacity after rest, so the health signal is not monotone
-in the way turbofan degradation is, and the fitted sensor-space companion matrix
-has spectral radius close to one. The process is therefore near a driftless
-random walk, for which persistence is the minimum-variance predictor and no
-rollout, latent or otherwise, can be expected to beat it by a wide margin. It is
-precisely this regime that isolates the reconstruction term of
-Theorem~\ref{thm:anchored} from the curvature term.
-
-\begin{table}[t]
-\centering
-\caption{NASA battery forecast skill relative to persistence at each horizon,
-with free-run growth and boundedness. Plain-decoded latent rollout (damped
-constant velocity) is dominated by persistence; anchored decoding is the only
-latent head with positive skill at every horizon.}
-\label{tab:ext-battery}
-\tinytable
-\verytighttables
-\begin{tabular}{@{}lrrrrrc@{}}
-\toprule
-Model & Skill@1 & Skill@10 & Skill@30 & Skill@60 & Growth & Bnd. \\
-\midrule
-persistence        & $0.00$    & $0.00$   & $0.00$   & $0.00$   & 1.00 & yes \\
-sensor VAR         & $-29.84$  & $-7.44$  & $-6.72$  & $-3.65$  & 0.92 & yes \\
-damped CV (plain)  & $-610.8$  & $-15.19$ & $-7.89$  & $-2.81$  & 1.00 & yes \\
-anchored decoding  & $+0.05$   & $+0.01$  & $+0.05$  & $+0.04$  & 1.00 & yes \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Every plain-decoded head is far worse than persistence at every horizon, the
-damped constant-velocity rollout reaching a skill of $-610.8$ at horizon one.
-Anchored decoding removes the origin offset and is the only latent head with
-positive skill at every horizon, while also exceeding the sensor-space VAR
-everywhere; free-run growth stays at $1.00$. The damping coefficient and the
-Holt parameters are selected on training trajectories only.
-
-Two qualifications belong with this result. First, the margins are small, from
-$+0.006$ to $+0.048$ in skill, equivalently a $0.3\%$ to $2.4\%$ reduction in
-NRMSE. Near a martingale this is close to the achievable ceiling, and the result
-should be read as a change of sign rather than a large-margin win. Second, the
-selected damping is $\phi^\star=0$, which under the geometric damping schedule
-leaves a single velocity step that is then held constant across the horizon. The
-anchored battery forecast is therefore the last observation plus one fixed
-decoded increment, and the latent dynamics contribute one step rather than a
-trajectory. This is the expected behaviour when the curvature term of
-Theorem~\ref{thm:anchored} is negligible and the residual term binds: the
-dataset exercises the decoding identity, not the rollout. The C-MAPSS results of
-Section~\ref{sec:results} exercise the opposite end, where curvature dominates
-and the rollout does the work.
 \section{Implementation Diagnostics}
 
 The theory-matched full-box latent projection and the legacy $h_0$-only
