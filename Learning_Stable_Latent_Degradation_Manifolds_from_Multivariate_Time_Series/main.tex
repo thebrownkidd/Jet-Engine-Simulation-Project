@@ -108,15 +108,22 @@ denoises the resulting trajectories, selects degradation-sensitive channels,
 and trains a bounded latent autoencoder with monotonicity and smoothness
 regularization on a primary health coordinate. We provide a theoretical
 analysis separating sensor-space closed-loop divergence, bounded latent
-rollout, and smoothness-controlled forecastability. Experiments on NASA
-C-MAPSS show that higher-dimensional latent spaces can improve reconstruction
-while weakening rollout stability. Ablations further show that finite-horizon
-decoded boundedness is not unique to the bounded latent model: an unbounded
+rollout, and smoothness-controlled forecastability, and we extend it in two
+directions: an error bound for damped and windowed extrapolation, and anchored
+decoding, which cancels the reconstruction offset that a decoded forecast
+carries at its origin. Experiments on NASA C-MAPSS show that
+higher-dimensional latent spaces can improve reconstruction while weakening
+rollout stability. Ablations further show that finite-horizon decoded
+boundedness is not unique to the bounded latent model: an unbounded
 autoencoder may also remain numerically bounded under constant-velocity
 rollout because of small latent velocities and decoder saturation. The main
 empirical advantage of the proposed representation is therefore forecastability:
 lower latent curvature, higher forecast skill, and useful downstream
-remaining-useful-life prediction.
+remaining-useful-life prediction. On the PHM~2010 CNC milling benchmark both
+mechanisms transfer outside turbofan degradation: the sensor-space recursion
+leaves the boundedness criterion under a long free run while every bounded
+latent rollout stays controlled, and anchored decoding removes the
+short-horizon penalty that plain decoding incurs.
 \end{abstract}
 
 \begin{keywords}
@@ -185,10 +192,11 @@ The main contributions are:
 
     \item We introduce \emph{anchored decoding}, a reformulation of the decoded
     forecast that cancels the origin reconstruction offset. We prove its error
-    obeys the same curvature bound as constant-velocity rollout up to the
-    decoder Lipschitz constant, plus a reconstruction-residual term; empirically
-    it is the first bounded-latent head to exceed both persistence and a
-    sensor-space VAR at every horizon on a near-stationary external dataset.
+    obeys the same curvature bound as the underlying rollout up to the decoder
+    Lipschitz constant, plus a reconstruction-residual term, and we give the
+    condition on that residual under which anchoring is an improvement.
+    Empirically it removes the short-horizon penalty that plain decoding incurs,
+    changing horizon-one skill on CNC tool wear from $-263$ to $-0.73$.
 \end{itemize}
 
 % ============================================================
@@ -1019,95 +1027,15 @@ $0.0482$, within a third of persistence rather than sixteen times worse.
 Anchored damped constant velocity is also the only rule with positive skill at
 the longest horizon.
 
-Two features of this dataset make it a useful complement to the near-stationary
-case of Section~\ref{sec:battery}. The fitted damping is
-$\phi^\star=0.9$, close to undamped extrapolation, so the latent rollout is
-genuinely doing work here rather than contributing a single frozen step; and
-the reconstruction residual is large enough that the offset term dominates the
-curvature term at short horizons, which is precisely the regime in which
-Proposition~\ref{prop:anchor-gain} predicts anchoring to pay. The two
-mechanisms of Section~\ref{sec:theory} are therefore both visible on a single
+Two features of this dataset explain why both mechanisms are visible on it at
+once. The fitted damping is $\phi^\star=0.9$, close to undamped extrapolation,
+so the latent rollout is genuinely doing work rather than contributing a single
+frozen step; and the reconstruction residual is large enough that the offset
+term dominates the curvature term at short horizons, which is the regime in
+which Proposition~\ref{prop:anchor-gain} predicts anchoring to pay. The two
+mechanisms of Section~\ref{sec:theory} are therefore both exercised on a single
 external dataset: bounded latent geometry controls the admissible state space
 over long free runs, and the decoding choice controls the error inside it.
-
-\subsection{Cross-Domain Validation: Li-ion Battery Aging}
-\label{sec:battery}
-
-The NASA Li-ion battery aging dataset \citep{saha2007battery} satisfies these
-requirements. It provides
-26 cells, each run over repeated discharge cycles until end of life at
-approximately 70\% of initial capacity, with per-discharge-cycle summaries of
-the voltage, current, and temperature curves alongside the measured capacity.
-Operating-condition groups, defined by ambient temperature and discharge
-protocol, are recorded in the dataset metadata and are used for the
-per-condition normalization step in place of the clustering used on C-MAPSS,
-since here the conditions are given rather than inferred. The latent dimension
-is $K{=}4$ by the elbow criterion and evaluation is at horizons
-$\{1,10,30,60\}$ discharge cycles.
-
-The dataset is deliberately the unfavourable case. Capacity fade is gradual, but
-Li-ion cells recover capacity after rest, so the health signal is not monotone
-in the way turbofan degradation is. The behaviour of the baselines in
-Table~\ref{tab:ext-battery} shows what this costs: persistence is not beaten by any
-sensor-space or plain-decoded competitor at any horizon, which is the signature
-of a process close to a driftless random walk, for which persistence is the
-minimum-variance predictor. No rollout, latent or otherwise, should be expected
-to beat it by a wide margin here. It is precisely this regime that isolates the
-reconstruction term of Theorem~\ref{thm:anchored} from the curvature term, since
-the curvature term has almost nothing to contribute.
-
-\begin{table}[t]
-\centering
-\caption{NASA battery forecast skill relative to persistence at each horizon,
-with free-run growth and boundedness. Plain-decoded latent rollout (damped
-constant velocity) is dominated by persistence; anchored decoding is the only
-latent head with positive skill at every horizon. Growth here is measured at the
-data horizon, unlike Table~\ref{tab:milling-growth}, which additionally reports the
-end-of-life probe; the two growth columns are therefore not directly comparable
-across datasets.}
-\label{tab:ext-battery}
-\tinytable
-\verytighttables
-\begin{tabular}{@{}lrrrrrc@{}}
-\toprule
-Model & Skill@1 & Skill@10 & Skill@30 & Skill@60 & Growth & Bnd. \\
-\midrule
-persistence        & $0.00$    & $0.00$   & $0.00$   & $0.00$   & 1.00 & yes \\
-sensor VAR         & $-29.84$  & $-7.44$  & $-6.72$  & $-3.65$  & 0.92 & yes \\
-damped CV (plain)  & $-610.8$  & $-15.19$ & $-7.89$  & $-2.81$  & 1.00 & yes \\
-anchored decoding  & $+0.05$   & $+0.01$  & $+0.05$  & $+0.04$  & 1.00 & yes \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Free-run growth in Table~\ref{tab:ext-battery} is measured at the data horizon,
-that is, the roll stops at the last observed discharge cycle. It therefore
-answers a narrower question than the end-of-life probe of
-Table~\ref{tab:milling-growth}: it establishes that no head destabilises within the
-observed record, not that the sensor-space recursion is contractive. As
-Section~\ref{sec:milling} shows, those two questions can have different answers for
-the same fitted operator, and the comparison is left open here.
-
-Every plain-decoded head is far worse than persistence at every horizon, the
-damped constant-velocity rollout reaching a skill of $-610.8$ at horizon one.
-Anchored decoding removes the origin offset and is the only latent head with
-positive skill at every horizon, while also exceeding the sensor-space VAR
-everywhere; free-run growth stays at $1.00$. The damping coefficient and the
-Holt parameters are selected on training trajectories only.
-
-Two qualifications belong with this result. First, the margins are small, from
-$+0.006$ to $+0.048$ in skill, equivalently a $0.3\%$ to $2.4\%$ reduction in
-NRMSE. Near a martingale this is close to the achievable ceiling, and the result
-should be read as a change of sign rather than a large-margin win. Second, the
-improvement is attributable to the decoding rather than to the rollout. The
-plain and anchored rows of Table~\ref{tab:ext-battery} use the same latent
-trajectory and the same fitted damping, and differ only in whether the origin
-offset is cancelled; that single change moves horizon-one skill from $-610.8$ to
-$+0.05$. On this dataset the latent dynamics contribute almost nothing and the
-decoding identity contributes everything, which is what Theorem~\ref{thm:anchored}
-predicts when the curvature term is negligible and the residual term binds.
-Section~\ref{sec:milling} exercises the opposite end, where the fitted damping is
-close to undamped extrapolation and the rollout does the work.
 
 \subsection{Latent Dimension: Capacity Versus Stability}
 
@@ -1228,8 +1156,8 @@ Transfer & FD002 & Generalized RUL RMSE & 26.92 \\
 The generalized model preserves bounded rollout on three of four datasets and
 achieves near-identical FD002 RUL to the specialist model. This suggests that
 the learned geometry is partially reusable across related degradation settings.
-Sections~\ref{sec:milling} and~\ref{sec:battery} test the same pipeline
-outside the turbofan domain, on CNC tool wear and Li-ion battery aging.
+Section~\ref{sec:milling} tests the same pipeline outside the turbofan domain,
+on CNC tool wear.
 
 \subsection{Downstream RUL Utility and Literature Context}
 
@@ -1312,12 +1240,11 @@ long-horizon rollout, while preserving useful downstream RUL information.
 
 \subsection{Limitations}
 
-The evaluation covers turbofan degradation (FD001--FD004), CNC tool wear
-(Section~\ref{sec:milling}) and Li-ion battery aging
-(Section~\ref{sec:battery}). Downstream RUL is reported only on C-MAPSS,
-since the external datasets carry no official remaining-useful-life labels,
-so the cross-domain evidence covers stability and forecastability but not
-RUL accuracy.
+The evaluation covers turbofan degradation (FD001--FD004) and CNC tool wear
+(Section~\ref{sec:milling}). Downstream RUL is reported only on C-MAPSS, since
+the milling benchmark carries no official remaining-useful-life labels, so the
+cross-domain evidence covers stability and forecastability but not RUL
+accuracy. Cross-domain evidence rests on a single external benchmark.
 
 Anchored decoding is not universally preferable, and
 Proposition~\ref{prop:anchor-gain} states the condition under which it helps.

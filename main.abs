@@ -9,12 +9,19 @@ denoises the resulting trajectories, selects degradation-sensitive channels,
 and trains a bounded latent autoencoder with monotonicity and smoothness
 regularization on a primary health coordinate. We provide a theoretical
 analysis separating sensor-space closed-loop divergence, bounded latent
-rollout, and smoothness-controlled forecastability. Experiments on NASA
-C-MAPSS show that higher-dimensional latent spaces can improve reconstruction
-while weakening rollout stability. Ablations further show that finite-horizon
-decoded boundedness is not unique to the bounded latent model: an unbounded
+rollout, and smoothness-controlled forecastability, and we extend it in two
+directions: an error bound for damped and windowed extrapolation, and anchored
+decoding, which cancels the reconstruction offset that a decoded forecast
+carries at its origin. Experiments on NASA C-MAPSS show that
+higher-dimensional latent spaces can improve reconstruction while weakening
+rollout stability. Ablations further show that finite-horizon decoded
+boundedness is not unique to the bounded latent model: an unbounded
 autoencoder may also remain numerically bounded under constant-velocity
 rollout because of small latent velocities and decoder saturation. The main
 empirical advantage of the proposed representation is therefore forecastability:
 lower latent curvature, higher forecast skill, and useful downstream
-remaining-useful-life prediction.
+remaining-useful-life prediction. On the PHM~2010 CNC milling benchmark both
+mechanisms transfer outside turbofan degradation: the sensor-space recursion
+leaves the boundedness criterion under a long free run while every bounded
+latent rollout stays controlled, and anchored decoding removes the
+short-horizon penalty that plain decoding incurs.
