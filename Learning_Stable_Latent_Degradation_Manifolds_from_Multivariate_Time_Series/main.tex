@@ -466,9 +466,28 @@ future sensors; where no such variables exist, $g_\psi$ takes $\h_t$ alone.
 Because the projection $\Pi_{\Hspace}$ is unchanged,
 Theorem~\ref{thm:bounded-rollout} applies verbatim for any $g_\psi$: the
 learned variant changes only which motion within $\Hspace$ is predicted, never
-whether the rollout stays in $\Hspace$. This head is used in the sensitivity
-sweep of Appendix~\ref{app:sensitivity} and the external-domain evaluation of
-Section~\ref{sec:battery}.
+whether the rollout stays in $\Hspace$. This head is exercised in the step-size
+sweep of Appendix~\ref{app:sensitivity}. It is not of the linear-extrapolation form
+analysed in Proposition~\ref{prop:general-extrap}, so unlike the rules below it
+carries the boundedness guarantee without a curvature-based error bound, and the
+reported rollouts do not use it.
+
+The reported rollouts share a single form. The velocity $\hat{\mathbf{v}}$ is
+estimated by ordinary least squares over a trailing window, and the forecast is
+\[
+    \hat{\h}_{c+\tau}
+    =
+    \Pi_{\Hspace}\bigl(\h_c+\hat{\mathbf{v}}\,S_\tau\bigr),
+\]
+where the weights $S_\tau$ select the rule. Taking $S_\tau=\tau$ gives constant
+velocity. Taking $S_\tau=(1-\phi^\tau)/(1-\phi)$ damps the extrapolation
+geometrically toward a frozen state, in the manner of damped-trend exponential
+smoothing \citep{gardner1985forecasting}; $\phi{=}1$ recovers constant velocity and
+$\phi{=}0$ freezes the state after a single step. A Holt damped-trend recursion,
+which smooths a level and a trend rather than fitting one windowed slope, is the
+third member of the family. The damping and smoothing constants are selected on
+training trajectories only. Every rule of this form obeys both
+Theorem~\ref{thm:bounded-rollout} and Proposition~\ref{prop:general-extrap}.
 
 For RUL prediction, the downstream regressor uses all latent coordinates and
 their local velocities:
@@ -1019,27 +1038,33 @@ requirements. It provides
 26 cells, each run over repeated discharge cycles until end of life at
 approximately 70\% of initial capacity, with per-discharge-cycle summaries of
 the voltage, current, and temperature curves alongside the measured capacity.
-Seven operating-condition groups, defined by ambient temperature and discharge
+Operating-condition groups, defined by ambient temperature and discharge
 protocol, are recorded in the dataset metadata and are used for the
 per-condition normalization step in place of the clustering used on C-MAPSS,
-since the conditions are given rather than inferred. Evaluation is at horizons
+since here the conditions are given rather than inferred. The latent dimension
+is $K{=}4$ by the elbow criterion and evaluation is at horizons
 $\{1,10,30,60\}$ discharge cycles.
 
 The dataset is deliberately the unfavourable case. Capacity fade is gradual, but
 Li-ion cells recover capacity after rest, so the health signal is not monotone
-in the way turbofan degradation is, and the fitted sensor-space companion matrix
-has spectral radius close to one. The process is therefore near a driftless
-random walk, for which persistence is the minimum-variance predictor and no
-rollout, latent or otherwise, can be expected to beat it by a wide margin. It is
-precisely this regime that isolates the reconstruction term of
-Theorem~\ref{thm:anchored} from the curvature term.
+in the way turbofan degradation is. The behaviour of the baselines in
+Table~\ref{tab:ext-battery} shows what this costs: persistence is not beaten by any
+sensor-space or plain-decoded competitor at any horizon, which is the signature
+of a process close to a driftless random walk, for which persistence is the
+minimum-variance predictor. No rollout, latent or otherwise, should be expected
+to beat it by a wide margin here. It is precisely this regime that isolates the
+reconstruction term of Theorem~\ref{thm:anchored} from the curvature term, since
+the curvature term has almost nothing to contribute.
 
 \begin{table}[t]
 \centering
 \caption{NASA battery forecast skill relative to persistence at each horizon,
 with free-run growth and boundedness. Plain-decoded latent rollout (damped
 constant velocity) is dominated by persistence; anchored decoding is the only
-latent head with positive skill at every horizon.}
+latent head with positive skill at every horizon. Growth here is measured at the
+data horizon, unlike Table~\ref{tab:milling-growth}, which additionally reports the
+end-of-life probe; the two growth columns are therefore not directly comparable
+across datasets.}
 \label{tab:ext-battery}
 \tinytable
 \verytighttables
@@ -1055,6 +1080,14 @@ anchored decoding  & $+0.05$   & $+0.01$  & $+0.05$  & $+0.04$  & 1.00 & yes \\
 \end{tabular}
 \end{table}
 
+Free-run growth in Table~\ref{tab:ext-battery} is measured at the data horizon,
+that is, the roll stops at the last observed discharge cycle. It therefore
+answers a narrower question than the end-of-life probe of
+Table~\ref{tab:milling-growth}: it establishes that no head destabilises within the
+observed record, not that the sensor-space recursion is contractive. As
+Section~\ref{sec:milling} shows, those two questions can have different answers for
+the same fitted operator, and the comparison is left open here.
+
 Every plain-decoded head is far worse than persistence at every horizon, the
 damped constant-velocity rollout reaching a skill of $-610.8$ at horizon one.
 Anchored decoding removes the origin offset and is the only latent head with
@@ -1066,15 +1099,15 @@ Two qualifications belong with this result. First, the margins are small, from
 $+0.006$ to $+0.048$ in skill, equivalently a $0.3\%$ to $2.4\%$ reduction in
 NRMSE. Near a martingale this is close to the achievable ceiling, and the result
 should be read as a change of sign rather than a large-margin win. Second, the
-selected damping is $\phi^\star=0$, which under the geometric damping schedule
-leaves a single velocity step that is then held constant across the horizon. The
-anchored battery forecast is therefore the last observation plus one fixed
-decoded increment, and the latent dynamics contribute one step rather than a
-trajectory. This is the expected behaviour when the curvature term of
-Theorem~\ref{thm:anchored} is negligible and the residual term binds: the
-dataset exercises the decoding identity, not the rollout. The C-MAPSS results of
-Section~\ref{sec:results} exercise the opposite end, where curvature dominates
-and the rollout does the work.
+improvement is attributable to the decoding rather than to the rollout. The
+plain and anchored rows of Table~\ref{tab:ext-battery} use the same latent
+trajectory and the same fitted damping, and differ only in whether the origin
+offset is cancelled; that single change moves horizon-one skill from $-610.8$ to
+$+0.05$. On this dataset the latent dynamics contribute almost nothing and the
+decoding identity contributes everything, which is what Theorem~\ref{thm:anchored}
+predicts when the curvature term is negligible and the residual term binds.
+Section~\ref{sec:milling} exercises the opposite end, where the fitted damping is
+close to undamped extrapolation and the rollout does the work.
 
 \subsection{Latent Dimension: Capacity Versus Stability}
 
