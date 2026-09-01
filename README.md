@@ -1,4 +1,13 @@
-﻿# Bounded Latent-Dynamics for Machine Health and Forecasting
+[![SSRN Preprint](https://img.shields.io/badge/SSRN-7180558-blue)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7180558)
+[![Under Review](https://img.shields.io/badge/Status-Under%20Review%20at%20EAAI-orange)]()
+
+> **Paper:** *Learning Bounded Latent Degradation Dynamics for Stable Rollout and Remaining Useful Life Prediction*
+> **Author:** Arpit Goel (sole author) | **Status:** Submitted to Engineering Applications of Artificial Intelligence (EAAI), under review
+> [Read the preprint on SSRN](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7180558) | **Companion repo (method framework):** [Bounded-and-unbounded-latent-decoupling](https://github.com/thebrownkidd/Bounded-and-unbounded-latent-decoupling-for-forecast-and-reconstruction-quality)
+
+---
+
+# Bounded Latent-Dynamics for Machine Health and Forecasting
 
 This project is about teaching a computer to watch the sensors on a machine (like a jet engine or a drill) and answer two questions:
 
@@ -191,3 +200,22 @@ Use the project's Python environment, then run any experiment. Two examples:
 ```
 
 Each run prints a plain-language summary at the end and saves a table and a figure into `results/acml/`.
+
+---
+
+## Citation
+
+If you use this work, please cite the SSRN preprint:
+
+```bibtex
+@article{goel2026bounded,
+  title   = {Learning Bounded Latent Degradation Dynamics for Stable Rollout
+             and Remaining Useful Life Prediction},
+  author  = {Goel, Arpit},
+  year    = {2026},
+  journal = {SSRN Electronic Journal},
+  note    = {Preprint 7180558. Submitted to Engineering Applications of
+             Artificial Intelligence (EAAI), under review},
+  url     = {https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7180558}
+}
+```
